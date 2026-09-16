@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Compose owns the real theme (see core/common ui/Theme.kt); this manifest-level
+         style only controls the window background before Compose content is drawn. -->
+    <style name="Theme.Sink" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/sink_window_background</item>
+        <item name="android:statusBarColor">@color/sink_window_background</item>
+    </style>
+</resources>

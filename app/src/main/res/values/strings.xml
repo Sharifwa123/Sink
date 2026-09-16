@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sink</string>
+    <string name="company_name">SHARIF TECHNOLOGIES</string>
+    <string name="app_tagline">Offline communication when connectivity is unavailable.</string>
+</resources>

@@ -83,10 +83,10 @@ private fun DiscoveryScreen(
 @Composable
 private fun PermissionPrompt(onRequest: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(32.dp), verticalArrangement = Arrangement.Center) {
-        Text("Nearby device permission is required", style = MaterialTheme.typography.titleMedium)
+        Text("Bluetooth & Wi-Fi permission is required", style = MaterialTheme.typography.titleMedium)
         androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 8.dp))
         Text(
-            "Sink needs this permission to discover other Sink devices near you.",
+            "Sink needs Bluetooth and Wi-Fi access to discover other Sink devices near you.",
             style = MaterialTheme.typography.bodyMedium,
         )
         androidx.compose.foundation.layout.Spacer(Modifier.padding(top = 16.dp))

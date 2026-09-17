@@ -19,6 +19,18 @@ val keystoreProperties = Properties().apply {
 }
 val hasReleaseSigningConfig = keystorePropertiesFile.exists()
 
+// SECURITY.md and THREAT_MODEL.md are written for end users (see AboutScreen),
+// not just developers browsing the repo, so they ship inside the APK as assets
+// instead of only existing on GitHub. Copied at build time from the single
+// source of truth in docs/ rather than duplicated by hand, so they can't drift.
+val legalAssetsDir = layout.buildDirectory.dir("generated/legalAssets")
+val copyLegalDocs by tasks.registering(Copy::class) {
+    from(rootProject.file("docs")) {
+        include("SECURITY.md", "THREAT_MODEL.md")
+    }
+    into(legalAssetsDir)
+}
+
 android {
     namespace = "com.sharif.sink.app"
     compileSdk = 34
@@ -31,6 +43,12 @@ android {
         versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    sourceSets {
+        getByName("main") {
+            assets.srcDir(legalAssetsDir)
+        }
     }
 
     signingConfigs {
@@ -77,6 +95,12 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+}
+
+// AGP's asset-merging tasks don't know about copyLegalDocs unless told explicitly —
+// declaring assets.srcDir() alone doesn't create a task dependency.
+tasks.matching { it.name.matches(Regex("merge.*Assets")) }.configureEach {
+    dependsOn(copyLegalDocs)
 }
 
 dependencies {

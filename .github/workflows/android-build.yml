@@ -17,6 +17,12 @@ concurrency:
   group: android-build-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege default; the two publish-* jobs below elevate to
+# contents: write only for themselves, since they're the only ones that
+# create/update GitHub Releases.
+permissions:
+  contents: read
+
 jobs:
   engine-tests:
     name: Engine unit tests (pure Kotlin/JVM)
@@ -115,3 +121,77 @@ jobs:
         with:
           name: sink-release-apk
           path: app/build/outputs/apk/release/*.apk
+
+  # Now that the repository is public, a workflow-run artifact isn't a real
+  # download link for a visitor: it expires (default 90 days) and requires
+  # being signed into GitHub just to fetch it. A GitHub Release has neither
+  # limitation, so it's the actual permanent, public download surface.
+  #
+  # This job maintains a single rolling "latest-debug" release that always
+  # points at the newest successful build on the default branch — a
+  # continuous-build pattern, not a versioned release (debug builds don't
+  # carry a meaningful version bump on every commit).
+  publish-debug-release:
+    name: Publish permanent debug APK release
+    needs: build-debug-apk
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sink-debug-apk
+          path: dist
+
+      - name: Publish/replace the "latest-debug" GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk_path=$(find dist -name '*.apk' | head -n1)
+          gh release delete latest-debug --yes --cleanup-tag --repo "${{ github.repository }}" || true
+          gh release create latest-debug "$apk_path" \
+            --repo "${{ github.repository }}" \
+            --title "Latest debug build" \
+            --notes "Automatically published from commit ${{ github.sha }} on every push to ${{ github.event.repository.default_branch }}. This is a debug-signed build for trying Sink without building it yourself — it is not a production release. See docs/RELEASE.md and docs/IMPLEMENTATION_STATUS.md." \
+            --prerelease
+
+  # Only runs once RELEASE_KEYSTORE_BASE64/RELEASE_KEYSTORE_PASSWORD/
+  # RELEASE_KEY_ALIAS/RELEASE_KEY_PASSWORD secrets and the HAS_RELEASE_SIGNING
+  # variable are configured (see docs/RELEASE.md) — until then this is a no-op,
+  # and visitors get the debug release above instead.
+  publish-release:
+    name: Publish signed release APK to a permanent GitHub Release
+    needs: build-release-apk
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'Sharifwa123/Sink' && vars.HAS_RELEASE_SIGNING == 'true' && github.event_name == 'push' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: sink-release-apk
+          path: dist
+
+      - name: Read versionName from app/build.gradle.kts
+        id: version
+        run: |
+          version=$(grep -oP 'versionName\s*=\s*"\K[^"]+' app/build.gradle.kts)
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Publish signed release APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk_path=$(find dist -name '*.apk' | head -n1)
+          tag="${{ steps.version.outputs.tag }}"
+          gh release create "$tag" "$apk_path" \
+            --repo "${{ github.repository }}" \
+            --title "Sink $tag" \
+            --notes "Signed release build of Sink. See docs/RELEASE.md and docs/IMPLEMENTATION_STATUS.md for what is and isn't implemented." \
+            --latest \
+            || gh release upload "$tag" "$apk_path" --repo "${{ github.repository }}" --clobber

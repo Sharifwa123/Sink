@@ -51,6 +51,16 @@ current summary.
 - ProGuard/R8 rules, conditional release signing config (no secrets
   committed), versioned `applicationId`, debug/release build type
   separation, vector adaptive app icon.
+- SECURITY.md/THREAT_MODEL.md bundled into the APK as assets and readable
+  from About → Security / Threat model, instead of only existing on
+  GitHub — these are user-facing documents, not developer-only ones.
+- Optional in-app update check (`UpdateChecker`, `core:networking`):
+  queries GitHub's public releases API on Home launch, shows an "Update
+  available" banner with a direct download link when a newer release
+  exists. Toggleable from Settings; the only network call Sink makes on
+  its own (see `docs/SECURITY.md`). CI publishes permanent, public GitHub
+  Releases (`latest-debug` rolling release, plus versioned signed
+  releases once signing is configured) for this to point at.
 
 ## PARTIALLY COMPLETED
 

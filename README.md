@@ -6,6 +6,11 @@
 
 > Offline communication when connectivity is unavailable.
 
+## Download
+
+Grab a build straight from the [Releases page](https://github.com/Sharifwa123/Sink/releases) — no sign-in, no build tools:
+[`latest-debug`](https://github.com/Sharifwa123/Sink/releases/tag/latest-debug) is republished automatically after every successful build of `main` (debug-signed, for trying Sink, not a production release). A signed, versioned release appears there too once release signing is configured — see `docs/RELEASE.md`.
+
 Sink is an Android-first, offline-first mesh messenger. Two or more people
 can exchange end-to-end encrypted text messages using nearby Android
 devices as relays, without any dependency on a cloud server, an account,

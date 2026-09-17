@@ -6,7 +6,7 @@ for the exact API-level branching.
 
 | Permission bundle | Manifest permissions (varies by API level) | Why | When requested |
 |---|---|---|---|
-| `NEARBY_DEVICES` | `BLUETOOTH_SCAN`/`ADVERTISE`/`CONNECT`, `NEARBY_WIFI_DEVICES`, or `ACCESS_COARSE_LOCATION` pre-Android 12 | Discover and connect to nearby Sink devices for local mesh messaging | Onboarding's "Find nearby Sink users" step (skippable), and again from the Discovery screen if skipped or later revoked |
+| `NEARBY_DEVICES` | `BLUETOOTH_SCAN`/`ADVERTISE`/`CONNECT`, `NEARBY_WIFI_DEVICES`, or `ACCESS_COARSE_LOCATION` pre-Android 12 | Discover and connect to nearby Sink devices for local mesh messaging **over Bluetooth and Wi-Fi directly** — the two radios the mesh actually uses, never mobile data | Onboarding's "Find nearby Sink users" step (skippable), and again from the Discovery screen if skipped or later revoked. Copy throughout the app names Bluetooth and Wi-Fi explicitly rather than a vague "nearby devices" label, and the Diagnostics screen shows each radio's grant status individually. |
 | `NOTIFICATIONS` | `POST_NOTIFICATIONS` (API 33+ only; granted at install pre-33) | Let the user know about incoming/delivered messages and mesh status while the app is backgrounded briefly | Not currently requested via a dedicated runtime prompt in this build — surfaced by the OS the first time a notification would be shown; a proactive contextual prompt is a reasonable follow-up (see `docs/IMPLEMENTATION_STATUS.md`) |
 | `SEND_SMS` | `SEND_SMS` | Send a message as a fallback when no mesh/internet route exists, only after the user explicitly chooses "Send by SMS" | At the moment the user taps "Send by SMS" on a specific message — never earlier |
 

@@ -1,5 +1,7 @@
 package com.sharif.sink.feature.home
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,9 +15,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,11 +35,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sharif.sink.database.entity.ConversationEntity
 import com.sharif.sink.mesh.NetworkStatus
+import com.sharif.sink.networking.update.UpdateInfo
 
 @Composable
 fun HomeRoute(
@@ -53,6 +60,7 @@ fun HomeRoute(
         onOpenSettings = onOpenSettings,
         onOpenEducation = onOpenEducation,
         onOpenMeshVisualization = onOpenMeshVisualization,
+        onDismissUpdate = viewModel::dismissUpdate,
     )
 }
 
@@ -65,6 +73,7 @@ private fun HomeScreen(
     onOpenSettings: () -> Unit,
     onOpenEducation: () -> Unit,
     onOpenMeshVisualization: () -> Unit,
+    onDismissUpdate: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -92,6 +101,8 @@ private fun HomeScreen(
         },
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+            uiState.updateInfo?.let { UpdateAvailableBanner(it, onDismiss = onDismissUpdate) }
+
             NetworkStatusBanner(uiState.networkStatus)
 
             if (uiState.conversations.isEmpty()) {
@@ -102,6 +113,46 @@ private fun HomeScreen(
                         ConversationRow(conversation, onClick = { onOpenConversation(conversation.peerDeviceId) })
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateAvailableBanner(updateInfo: UpdateInfo, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    Surface(color = MaterialTheme.colorScheme.secondaryContainer, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Filled.SystemUpdate,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            Spacer(Modifier.padding(horizontal = 6.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Update available",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    "Sink ${updateInfo.latestVersion} is ready to download.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
+            Button(onClick = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(updateInfo.downloadUrl)))
+            }) { Text("Get it") }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = "Dismiss",
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
             }
         }
     }

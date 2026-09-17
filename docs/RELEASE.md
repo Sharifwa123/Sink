@@ -18,6 +18,31 @@ couldn't compile the Android module tree. On every push and PR:
    reconstruct `keystore.properties` at build time. Never enable this
    without also adding the secrets — the job reconstructs the keystore
    from them into the runner's temp directory, never commits anything.
+4. **`publish-debug-release`** — on every push to the default branch,
+   publishes the debug APK to a permanent, public GitHub Release tagged
+   `latest-debug` (see "Downloads for visitors" below). Workflow-run
+   artifacts alone aren't a real download link once the repo is public:
+   they expire and require a GitHub sign-in to fetch.
+5. **`publish-release`** — same idea, but for the signed release APK, only
+   once `HAS_RELEASE_SIGNING` is configured. Publishes/updates a versioned
+   release (`vX.Y.Z`, read from `app/build.gradle.kts`'s `versionName`)
+   and marks it as the repository's "latest" release.
+
+## Downloads for visitors
+
+Now that the repository is public, anyone can grab a build without
+signing into GitHub or touching Android Studio, from the Releases page:
+`https://github.com/Sharifwa123/Sink/releases`.
+
+- **`latest-debug`** always points at the newest successful build of the
+  default branch — a rolling/continuous release, republished on every
+  push (its git tag is deleted and recreated each time, so old debug APKs
+  don't pile up as separate releases). Debug-signed, for trying Sink out;
+  not a production release.
+- Once release signing is configured (below), each version gets its own
+  permanent, versioned release (`v0.1.0`, `v0.2.0`, ...) with the signed
+  APK attached, and the newest one is marked "Latest" on the Releases
+  page.
 
 To enable signed release builds in CI, add these **repository secrets**
 (Settings → Secrets and variables → Actions → Secrets):
@@ -79,7 +104,9 @@ use no reflection).
 - There is no backend/API endpoint configuration to leak — Sink's core
   messaging has no server dependency (see `docs/ARCHITECTURE.md`), and
   the internet transport is currently an honest stub
-  (`docs/IMPLEMENTATION_STATUS.md`).
+  (`docs/IMPLEMENTATION_STATUS.md`). The one outbound call Sink makes on
+  its own is the optional, disclosed GitHub releases check described in
+  `docs/SECURITY.md` — a hardcoded public API URL, no credentials.
 
 ## App icon, branding
 

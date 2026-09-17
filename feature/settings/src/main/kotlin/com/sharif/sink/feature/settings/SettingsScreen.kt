@@ -48,6 +48,7 @@ fun SettingsRoute(
         onNearbyToggle = viewModel::setNearbyDiscoveryEnabled,
         onSmsToggle = viewModel::setSmsFallbackEnabled,
         onNotificationsToggle = viewModel::setNotificationsEnabled,
+        onUpdateCheckToggle = viewModel::setUpdateCheckEnabled,
         onOpenContacts = onOpenContacts,
         onOpenDiagnostics = onOpenDiagnostics,
         onOpenAbout = onOpenAbout,
@@ -65,6 +66,7 @@ private fun SettingsScreen(
     onNearbyToggle: (Boolean) -> Unit,
     onSmsToggle: (Boolean) -> Unit,
     onNotificationsToggle: (Boolean) -> Unit,
+    onUpdateCheckToggle: (Boolean) -> Unit,
     onOpenContacts: () -> Unit,
     onOpenDiagnostics: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -102,7 +104,7 @@ private fun SettingsScreen(
             item {
                 ListItem(
                     headlineContent = { Text("Nearby discovery") },
-                    supportingContent = { Text("Let Sink discover and connect to nearby devices") },
+                    supportingContent = { Text("Let Sink use Bluetooth and Wi-Fi to discover and connect to nearby devices") },
                     trailingContent = { Switch(checked = settings.nearbyDiscoveryEnabled, onCheckedChange = onNearbyToggle) },
                 )
             }
@@ -117,6 +119,13 @@ private fun SettingsScreen(
                 ListItem(
                     headlineContent = { Text("Notifications") },
                     trailingContent = { Switch(checked = settings.notificationsEnabled, onCheckedChange = onNotificationsToggle) },
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text("Check for updates") },
+                    supportingContent = { Text("On launch, check GitHub for a newer release — the only network request Sink makes on its own") },
+                    trailingContent = { Switch(checked = settings.updateCheckEnabled, onCheckedChange = onUpdateCheckToggle) },
                 )
             }
             item { HorizontalDivider() }

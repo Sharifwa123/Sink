@@ -25,11 +25,15 @@ import com.sharif.sink.feature.onboarding.navigation.ONBOARDING_ROUTE
 import com.sharif.sink.feature.onboarding.navigation.onboardingScreen
 import com.sharif.sink.feature.settings.navigation.aboutScreen
 import com.sharif.sink.feature.settings.navigation.diagnosticsScreen
+import com.sharif.sink.feature.settings.navigation.securityDocScreen
+import com.sharif.sink.feature.settings.navigation.threatModelDocScreen
 import com.sharif.sink.feature.settings.navigation.settingsScreen
 import com.sharif.sink.feature.contacts.navigation.CONTACTS_ROUTE
 import com.sharif.sink.feature.discovery.navigation.DISCOVERY_ROUTE
 import com.sharif.sink.feature.settings.navigation.ABOUT_ROUTE
 import com.sharif.sink.feature.settings.navigation.DIAGNOSTICS_ROUTE
+import com.sharif.sink.feature.settings.navigation.SECURITY_DOC_ROUTE
+import com.sharif.sink.feature.settings.navigation.THREAT_MODEL_DOC_ROUTE
 import com.sharif.sink.feature.settings.navigation.SETTINGS_ROUTE
 import com.sharif.sink.feature.education.navigation.EDUCATION_ROUTE
 import com.sharif.sink.feature.mesh.navigation.MESH_VISUALIZATION_ROUTE
@@ -109,6 +113,14 @@ fun SinkNavHost(
 
         diagnosticsScreen(onBack = navController::popBackStack)
 
-        aboutScreen(onBack = navController::popBackStack)
+        aboutScreen(
+            onBack = navController::popBackStack,
+            onOpenSecurityDoc = { navController.navigate(SECURITY_DOC_ROUTE) },
+            onOpenThreatModelDoc = { navController.navigate(THREAT_MODEL_DOC_ROUTE) },
+        )
+
+        securityDocScreen(onBack = navController::popBackStack)
+
+        threatModelDocScreen(onBack = navController::popBackStack)
     }
 }

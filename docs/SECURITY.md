@@ -109,3 +109,16 @@ only.
   TLS-wrapped by Sink; message confidentiality on the mesh comes entirely
   from the end-to-end `EciesCipher` layer described above, which is why
   it's applied per-message rather than relying on transport security.
+
+## The one network call Sink makes on its own
+
+Core messaging has no backend and makes no network calls (`InternetTransport`
+is an honest stub — see `docs/IMPLEMENTATION_STATUS.md`). The one exception
+is `UpdateChecker` (`core:networking`): a plain `GET` over HTTPS against
+GitHub's public releases API (`api.github.com/repos/.../releases/latest`) to
+see whether a newer build exists, since Sink isn't distributed through an
+app store with automatic updates. No account identifier, device identifier,
+or telemetry of any kind is attached — it carries no more information than
+opening that same public URL in a browser would. It's toggled off entirely
+from Settings → "Check for updates," and a failed/blocked check is silently
+ignored (see `UpdateChecker.checkForUpdate`), never surfaced as an error.

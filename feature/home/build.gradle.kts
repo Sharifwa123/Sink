@@ -32,6 +32,7 @@ dependencies {
     api("com.sharif.sink:mesh-engine")
     implementation(project(":core:database"))
     implementation(project(":core:networking"))
+    implementation(project(":core:datastore"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

@@ -146,15 +146,16 @@ private fun NearbyPermissionStep(granted: Boolean, onRequest: () -> Unit, onNext
     Text("Find nearby Sink users", style = MaterialTheme.typography.headlineSmall)
     Spacer(Modifier.height(16.dp))
     Text(
-        "Sink uses nearby device permission to discover and connect to other Sink devices " +
-            "near you, so messages can reach people even without internet or mobile data.",
+        "Sink uses Bluetooth and Wi-Fi directly to discover and connect to other Sink devices " +
+            "near you, so messages can reach people even without internet or mobile data. Depending on " +
+            "your device, you may see this as separate Bluetooth and Wi-Fi prompts.",
         style = MaterialTheme.typography.bodyLarge,
     )
     Spacer(Modifier.height(32.dp))
     if (granted) {
         Button(onClick = onNext, modifier = Modifier.fillMaxWidth()) { Text("Continue") }
     } else {
-        Button(onClick = onRequest, modifier = Modifier.fillMaxWidth()) { Text("Allow nearby device access") }
+        Button(onClick = onRequest, modifier = Modifier.fillMaxWidth()) { Text("Allow Bluetooth & Wi-Fi access") }
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = onNext, modifier = Modifier.fillMaxWidth()) { Text("Not now") }
     }

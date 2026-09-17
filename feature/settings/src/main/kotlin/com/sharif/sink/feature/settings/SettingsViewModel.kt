@@ -38,4 +38,8 @@ class SettingsViewModel @Inject constructor(
     fun setNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch { preferences.setNotificationsEnabled(enabled) }
     }
+
+    fun setUpdateCheckEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferences.setUpdateCheckEnabled(enabled) }
+    }
 }

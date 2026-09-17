@@ -20,6 +20,7 @@ data class SinkSettings(
     val nearbyDiscoveryEnabled: Boolean = true,
     val smsFallbackEnabled: Boolean = true,
     val notificationsEnabled: Boolean = true,
+    val updateCheckEnabled: Boolean = true,
     val transportPriorityCsv: String = DEFAULT_TRANSPORT_PRIORITY,
 ) {
     companion object {
@@ -40,6 +41,7 @@ class SinkPreferences @Inject constructor(
         val NEARBY_DISCOVERY_ENABLED = booleanPreferencesKey("nearby_discovery_enabled")
         val SMS_FALLBACK_ENABLED = booleanPreferencesKey("sms_fallback_enabled")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        val UPDATE_CHECK_ENABLED = booleanPreferencesKey("update_check_enabled")
         val TRANSPORT_PRIORITY = stringPreferencesKey("transport_priority")
     }
 
@@ -49,6 +51,7 @@ class SinkPreferences @Inject constructor(
             nearbyDiscoveryEnabled = prefs[Keys.NEARBY_DISCOVERY_ENABLED] ?: true,
             smsFallbackEnabled = prefs[Keys.SMS_FALLBACK_ENABLED] ?: true,
             notificationsEnabled = prefs[Keys.NOTIFICATIONS_ENABLED] ?: true,
+            updateCheckEnabled = prefs[Keys.UPDATE_CHECK_ENABLED] ?: true,
             transportPriorityCsv = prefs[Keys.TRANSPORT_PRIORITY] ?: SinkSettings.DEFAULT_TRANSPORT_PRIORITY,
         )
     }
@@ -67,6 +70,10 @@ class SinkPreferences @Inject constructor(
 
     suspend fun setNotificationsEnabled(enabled: Boolean) {
         context.dataStore.edit { it[Keys.NOTIFICATIONS_ENABLED] = enabled }
+    }
+
+    suspend fun setUpdateCheckEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.UPDATE_CHECK_ENABLED] = enabled }
     }
 
     suspend fun setTransportPriority(kindsCsv: String) {

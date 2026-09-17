@@ -7,6 +7,7 @@ import com.sharif.sink.database.dao.MessageDao
 import com.sharif.sink.mesh.NetworkStatus
 import com.sharif.sink.mesh.RoutingEngine
 import com.sharif.sink.mesh.TransportManager
+import com.sharif.sink.permissions.PermissionChecker
 import com.sharif.sink.protocol.PROTOCOL_VERSION
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,7 @@ data class DiagnosticsUiState(
     val directlyConnectedPeers: Int = 0,
     val queuedMessages: Int = 0,
     val pendingRetries: Int = 0,
+    val meshRadioStatus: List<Pair<String, Boolean>> = emptyList(),
 )
 
 /**
@@ -35,6 +37,7 @@ class DiagnosticsViewModel @Inject constructor(
     private val transportManager: TransportManager,
     private val routingEngine: RoutingEngine,
     private val messageDao: MessageDao,
+    private val permissionChecker: PermissionChecker,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DiagnosticsUiState())
@@ -54,6 +57,7 @@ class DiagnosticsViewModel @Inject constructor(
                 directlyConnectedPeers = transportManager.reachablePeers().size,
                 queuedMessages = messageDao.pendingForRetry().size,
                 pendingRetries = routingEngine.pendingRetryCount(),
+                meshRadioStatus = permissionChecker.meshRadioStatus(),
             )
         }
     }

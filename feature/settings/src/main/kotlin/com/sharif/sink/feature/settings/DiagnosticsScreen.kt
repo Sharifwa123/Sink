@@ -1,11 +1,17 @@
 package com.sharif.sink.feature.settings
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,7 +55,37 @@ private fun DiagnosticsScreen(uiState: DiagnosticsUiState, onBack: () -> Unit) {
             DiagnosticRow("Directly connected peers", uiState.directlyConnectedPeers.toString())
             DiagnosticRow("Queued messages", uiState.queuedMessages.toString())
             DiagnosticRow("Messages awaiting ACK", uiState.pendingRetries.toString())
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+            Text(
+                "Mesh radios",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "Sink's local mesh runs over these radios directly — never mobile data.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            uiState.meshRadioStatus.forEach { (label, granted) -> RadioStatusRow(label, granted) }
         }
+    }
+}
+
+@Composable
+private fun RadioStatusRow(label: String, granted: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Icon(
+            if (granted) Icons.Filled.CheckCircle else Icons.Filled.Cancel,
+            contentDescription = if (granted) "Granted" else "Not granted",
+            tint = if (granted) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(18.dp),
+        )
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = 8.dp))
     }
 }
 

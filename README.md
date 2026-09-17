@@ -50,13 +50,13 @@ docs/                        architecture, protocol, security, testing, release 
 ## Why two Gradle builds
 
 `engine/` has zero Android dependencies and needs only Maven Central, so
-it builds and runs its full test suite anywhere a JDK is available —
-including sandboxes with no Android SDK and no access to Google's Maven
-repository (the situation this project was actually built in; see
-`docs/ARCHITECTURE_AUDIT.md`). The root Android project depends on it as
-an included build (`includeBuild("engine")` in `settings.gradle.kts`) and
+its full test suite builds and runs anywhere a JDK is available, with no
+Android SDK required. The root Android project depends on it as an
+included build (`includeBuild("engine")` in `settings.gradle.kts`) and
 adds the platform layer: Compose UI, Room, Keystore, Nearby Connections,
-SMS, WorkManager.
+SMS, WorkManager. Keeping the routing/crypto/protocol core free of any
+Android dependency is what makes it independently unit-testable — see
+`docs/ARCHITECTURE.md`.
 
 ## Building
 
@@ -71,16 +71,13 @@ cd engine && ./gradlew test
 ./gradlew :app:assembleDebug
 ```
 
-This sandbox has neither, so the Android module tree's actual compile
-verification happens in CI (`.github/workflows/android-build.yml`) —
-check that workflow's status on the current commit rather than assuming
-this repository has been fully compiled locally. See
-`docs/ANDROID_LIMITATIONS.md` and `docs/IMPLEMENTATION_STATUS.md` for the
-full, honest picture.
+CI (`.github/workflows/android-build.yml`) builds and tests both on
+every push — see the badge above for the current status. See
+`docs/ANDROID_LIMITATIONS.md` and `docs/IMPLEMENTATION_STATUS.md` for
+platform constraints and current feature completeness.
 
 ## Documentation
 
-- `docs/ARCHITECTURE_AUDIT.md` — starting state and why the project is shaped this way
 - `docs/ARCHITECTURE.md` — module map and data flow
 - `docs/NETWORK_PROTOCOL.md` — the wire packet format
 - `docs/ROUTING.md` — the routing/forwarding algorithm and why it was chosen

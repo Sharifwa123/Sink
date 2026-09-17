@@ -12,8 +12,8 @@ import com.sharif.sink.protocol.TransportKind
 
 /**
  * Room-backed [MessageQueue]: this is what makes the outgoing queue durable
- * across process death and reboot, per the product brief's requirement
- * that a killed app process must never lose a queued message.
+ * across process death and reboot, so a killed app process never loses a
+ * queued message.
  */
 class RoomMessageQueue(
     private val messageDao: MessageDao,

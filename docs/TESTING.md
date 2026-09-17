@@ -1,6 +1,6 @@
 # Testing
 
-## Automated tests: `engine/` (43 tests, all passing, run in this project's CI-equivalent — see below)
+## Automated tests: `engine/` (43 tests, all passing — see CI)
 
 Run with:
 
@@ -8,10 +8,9 @@ Run with:
 cd engine && ./gradlew test
 ```
 
-This is the only part of the codebase actually compiled and tested as
-part of building this project (see `docs/ANDROID_LIMITATIONS.md` for
-why) — and it's also where all of the mesh/routing/crypto logic that the
-product brief calls "not fake mesh networking" lives.
+This is where all of the mesh/routing/crypto logic lives — real routing
+behavior proven by executed tests, not simulated-only or asserted by
+hand.
 
 | Test class | Count | Covers |
 |---|---|---|
@@ -28,8 +27,7 @@ product brief calls "not fake mesh networking" lives.
 
 ### `MeshRoutingSimulationTest` — the mesh simulator
 
-This is the "mesh simulation layer" called for by the product brief
-(§43): a `SimulatedMeshNetwork` + `SimulatedTransport` stand in for real
+This is the mesh simulation layer: a `SimulatedMeshNetwork` + `SimulatedTransport` stand in for real
 radios with a mutable adjacency graph, so the *actual* `RoutingEngine`
 and `TransportManager` — the same classes driven by real transports on a
 phone — are exercised across topologies that would otherwise need
@@ -46,7 +44,7 @@ several physical devices:
 5. **Hop budget exceeded**: a `maxHops` too small for the actual path
    length is dropped by an intermediate relay and, after retries exhaust,
    marked `FAILED` at the sender.
-6. **Store-and-forward**: exactly the product brief's example — B relays
+6. **Store-and-forward**: B relays
    for A→C, then B disappears (`network.disconnectAll`), a new message
    queues instead of failing silently, then B reconnects and the queued
    message delivers.

@@ -1,11 +1,8 @@
 name: Android build
 
-# This is the first place Sink's Android module tree actually gets compiled.
-# The sandbox this project was developed in has no Android SDK and no
-# network access to Google's Maven repository (dl.google.com), so only the
-# pure-Kotlin engine/ build could be verified there — see
-# docs/ANDROID_LIMITATIONS.md and docs/IMPLEMENTATION_STATUS.md. GitHub's
-# runners have both, so this workflow is the real compile/test gate.
+# The project's build/test gate: runs the engine/ unit test suite, then
+# assembles the Android app. See docs/RELEASE.md for what each job does
+# and how to enable signed release builds.
 
 on:
   push:

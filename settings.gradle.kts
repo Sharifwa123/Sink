@@ -18,7 +18,7 @@ rootProject.name = "Sink"
 
 // The mesh/crypto/protocol core is a separate, pure-Kotlin Gradle build
 // (no Android dependency) so it can be built and tested without the
-// Android SDK — see engine/build.gradle.kts and docs/ARCHITECTURE_AUDIT.md.
+// Android SDK — see engine/build.gradle.kts and docs/ARCHITECTURE.md.
 includeBuild("engine")
 
 include(":app")

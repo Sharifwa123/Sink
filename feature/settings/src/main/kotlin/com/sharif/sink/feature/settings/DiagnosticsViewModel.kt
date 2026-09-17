@@ -28,8 +28,7 @@ data class DiagnosticsUiState(
 
 /**
  * Never surfaces private key material or message plaintext — only
- * operational metadata useful for field testing, per the product brief's
- * explicit line on what a diagnostics screen may and may not show.
+ * operational metadata useful for field testing.
  */
 @HiltViewModel
 class DiagnosticsViewModel @Inject constructor(

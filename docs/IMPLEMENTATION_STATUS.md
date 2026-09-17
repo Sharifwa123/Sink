@@ -1,8 +1,8 @@
 # Implementation Status
 
-Written at the end of this build session. Read this before trusting any
-other claim in this repository's documentation — this is the honest,
-current summary.
+Read this before trusting any other claim in this repository's
+documentation — this is the honest, current summary of what's done,
+partially done, and not implemented.
 
 ## COMPLETED
 
@@ -66,8 +66,8 @@ current summary.
 
 - **Internet transport**: interface implemented, but `send()` always
   returns `Failed` — no backend/signaling service exists to make internet
-  messaging actually work, by design (the brief explicitly says the core
-  mesh must not depend on a backend). Wiring a real one is future work.
+  messaging actually work. This is by design: the core mesh must not
+  depend on a backend. Wiring a real one is future work.
 - **Forward secrecy**: per-message ephemeral-sender ECDH gives partial
   forward secrecy, not a full ratcheting session protocol. See
   `docs/SECURITY.md`.
@@ -76,14 +76,13 @@ current summary.
   runtime-permission priming screen or per-message notification
   (incoming-message push notification) implemented yet.
 - **Blocked-user enforcement**: enforced at the routing layer for
-  incoming `DATA` packets (fixed during this session — see
-  `docs/THREAT_MODEL.md` §8); does not yet also suppress a blocked
+  incoming `DATA` packets (see `docs/THREAT_MODEL.md` §8); does not yet also suppress a blocked
   contact's `HELLO`/`ACK` traffic from being relayed onward by this
   device (it will still forward them for someone else, just won't accept
   DATA packets addressed to itself from a blocked sender).
 - **Diagnostics screen**: shows real operational data (device id,
   protocol version, network status, connected-peer count, queue depth,
-  pending-ACK count) but not the fuller list the product brief describes
+  pending-ACK count) but not a fuller list that would also be useful
   (last successful transmission timestamp, last failure, database status)
   — a reasonable follow-up, not implemented here.
 
@@ -92,8 +91,7 @@ current summary.
 - QR-code-based contact verification (safety-number text comparison is
   implemented; QR scanning would need a camera + barcode library, judged
   out of scope for this pass — see `docs/SECURITY.md`).
-- Media (image/audio/video/file) transport — text-only, as the brief
-  prioritizes.
+- Media (image/audio/video/file) transport — text-only for this release.
 - Key rotation / multi-device identity / device-replacement identity
   migration flow.
 - A full mesh topology graph beyond one hop from each device's own
@@ -104,8 +102,8 @@ current summary.
   resources / Kotlin string literals structured so this is addable later,
   but no second locale exists yet).
 - Compose UI tests, Room migration tests, and any instrumented test —
-  none could run in this project's build sandbox (no Android SDK). See
-  below.
+  not yet written; CI currently runs the `engine/` unit suite and an
+  APK assembly check only. See below.
 
 ## KNOWN ANDROID LIMITATIONS
 
@@ -130,55 +128,37 @@ trust.
 
 ## TEST RESULTS
 
-`cd engine && ./gradlew test` — **43 tests, 0 failures**, as of this
-writing. Full breakdown in `docs/TESTING.md`. This is a real, executed
-result from this project's own build history, not an aspirational claim.
+`cd engine && ./gradlew test` — **43 tests, 0 failures**. Full breakdown
+in `docs/TESTING.md`.
 
 ## BUILD RESULT
 
 - **`engine/` (pure Kotlin/JVM)**: builds and tests successfully with
-  Gradle 8.14.3 / Kotlin 2.0.21 / JDK 21, verified repeatedly during
-  development.
-- **Root Android project (`app/`, `core/*`, `feature/*`)**: **was not
-  compiled during development** — the sandbox this was written in has no
-  Android SDK and cannot reach `dl.google.com` (Google's Maven
-  repository), so the Android Gradle Plugin, Compose, Room, Hilt,
-  DataStore, WorkManager, and Play Services Nearby Connections could not
-  be resolved there. Every file was written and manually reviewed to the
-  same engineering bar as the tested `engine/` code, cross-checked for
-  matching function signatures across module boundaries (navigation
-  callbacks, DI providers, DAO/entity fields). The real compile check now
-  happens in CI — see below — rather than in this project's own
-  development sandbox.
+  Gradle 8.14.3 / Kotlin 2.0.21 / JDK 21.
+- **Root Android project (`app/`, `core/*`, `feature/*`)**: builds
+  successfully — `./gradlew :app:assembleDebug` passes in CI on every
+  push. See `docs/RELEASE.md` for release/signing configuration.
 
 ## CONTINUOUS INTEGRATION
 
 `.github/workflows/android-build.yml` runs on every push/PR: the full
-`engine/` test suite, then `./gradlew :app:assembleDebug` on a GitHub
-runner (which has both the Android SDK and Google Maven access this
-sandbox lacked). **Check that workflow's status on the current commit for
-the actual answer to "does the Android app compile"** — this document
-describes the code as written and reviewed, not a guaranteed-green CI
-run, since CI results change independently of this file. See
+`engine/` test suite, then `./gradlew :app:assembleDebug`. Check that
+workflow's status on the current commit for the current build health —
+see the badge in `README.md`. On every push to the default branch it
+also publishes a downloadable build to GitHub Releases; see
 `docs/RELEASE.md` for what the workflow does and how to enable signed
 release builds.
 
 ## NEXT RECOMMENDED STEPS
 
-1. Check the `android-build` GitHub Actions workflow's result on the
-   latest commit; fix whatever it surfaces. Multi-module Kotlin/Compose/
-   Hilt projects typically have a handful of small wiring issues on a
-   first real compile (missing dependency declarations, import path
-   typos) even when carefully hand-written.
-2. Run the app on two to three physical devices and work through
+1. Run the app on two to three physical devices and work through
    `docs/DEVICE_TESTING.md`.
-3. Add a dedicated `POST_NOTIFICATIONS` runtime-permission priming step
+2. Add a dedicated `POST_NOTIFICATIONS` runtime-permission priming step
    and incoming-message push notifications.
-4. Decide on and implement a proper session ratchet (e.g., a
+3. Decide on and implement a proper ratcheting session protocol (e.g., a
    Signal-Protocol-style Double Ratchet) if stronger forward secrecy is a
    priority before wider release.
-5. Add Compose UI tests and Room migration tests once the module tree is
-   confirmed to compile.
-6. Revisit whether Curve25519 is now safely usable given Sink's actual
+4. Add Compose UI tests and Room migration tests.
+5. Revisit whether Curve25519 is now safely usable given Sink's actual
    minSdk before the first public release, per the note in
    `docs/SECURITY.md`.

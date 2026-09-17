@@ -18,8 +18,9 @@ data class MeshVisualizationUiState(val connectedPeers: List<PeerEntity> = empty
  * Shows only this device's own directly-connected peers — real data from
  * [PeerDao], never a fabricated multi-hop topology. Sink doesn't currently
  * track the full mesh graph beyond one hop from each device's own vantage
- * point, so this view is honestly scoped to what's actually known here,
- * per docs/EDUCATION and the product brief's "no fake nodes" requirement.
+ * point, so this view is honestly scoped to what's actually known here —
+ * no fabricated nodes, consistent with the "How Sink Works" education
+ * content (`feature/education`).
  */
 @HiltViewModel
 class MeshVisualizationViewModel @Inject constructor(

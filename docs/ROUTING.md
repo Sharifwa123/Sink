@@ -16,8 +16,8 @@ re-forwards something it's already seen.
   intermittently-connected mesh — a device's reachable neighbor set
   changes as people walk around, phones sleep, and radios reconnect.
   Building and keeping a full topology graph current across a
-  fast-changing, disconnection-prone edge set is exactly the kind of
-  extra complexity the product brief says not to build for an MVP.
+  fast-changing, disconnection-prone edge set is extra complexity not
+  worth building for the current scope.
 - Controlled flooding bounded by TTL and hop count is a standard,
   well-understood strategy for delay-tolerant / opportunistic networks —
   it needs no coordination protocol between nodes and degrades
@@ -57,8 +57,8 @@ the original signed/encrypted packet.
 
 `TransportManager.MESH_BROADCAST_KINDS` excludes `SMS` from
 `reachablePeers()`/`broadcast()` entirely. SMS costs the user money,
-reveals a phone number, and per the product brief must always be an
-explicit, user-confirmed action. The only way a packet goes out over SMS
+reveals a phone number, and must always be an explicit, user-confirmed
+action. The only way a packet goes out over SMS
 is `RoutingEngine.sendViaSpecificTransport(messageId, TransportKind.SMS)`,
 called directly by the chat UI when the user taps "Send by SMS" on a
 message with no other route.

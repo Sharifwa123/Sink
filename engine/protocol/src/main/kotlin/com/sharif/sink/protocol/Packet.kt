@@ -48,10 +48,10 @@ data class EncryptionMetadata(
  * read and mutate only [ttl]/[hopCount] and forwarding bookkeeping — never
  * [ciphertext].
  *
- * Field naming follows the brief's conceptual packet (protocolVersion,
+ * Field naming spells out its conceptual packet (protocolVersion,
  * packetType, messageId, senderId, destinationId, ttl, hopCount, timestamp,
- * payload, authenticationMetadata), specialized for a two-party
- * store-and-forward MVP.
+ * payload, authenticationMetadata) explicitly, specialized for a two-party
+ * store-and-forward design.
  */
 data class SinkPacket(
     val protocolVersion: Int = PROTOCOL_VERSION,

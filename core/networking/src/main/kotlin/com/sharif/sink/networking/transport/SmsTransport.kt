@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 private const val TAG = "SmsTransport"
 
 /**
- * The text-only, explicit-user-action fallback (product brief §18-19).
+ * The text-only, explicit-user-action fallback.
  * Deliberately excluded from [com.sharif.sink.mesh.TransportManager]'s
  * automatic flooding broadcast — see that class's `MESH_BROADCAST_KINDS` —
  * so this transport is only ever invoked directly, after the user chooses

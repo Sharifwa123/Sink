@@ -30,9 +30,9 @@ notification, as Android requires for a foreground service — only while
 the app is actually in the foreground (`MainActivity`'s lifecycle
 observer starts it on `ON_START`, stops it on `ON_STOP`). This is a
 deliberate choice, not an accepted-but-unwanted constraint: continuously
-scanning in the background would be exactly the "unnecessary background
-activity" the product brief warns against, and Android's Doze/App
-Standby would fight it anyway on most devices.
+scanning in the background would be exactly the kind of unnecessary
+battery drain Android's own Doze/App Standby is designed to fight
+anyway on most devices.
 
 **Consequence**: a message can only relay through a device whose Sink app
 is currently open (or, if the OS keeps the foreground service warm
@@ -78,19 +78,14 @@ API (`Context.getSystemService(SmsManager::class.java)`, API 31+), so
 Sink does not currently let a dual-SIM user choose which SIM sends the
 fallback SMS — a documented, minor gap rather than a silent one.
 
-## No verified compile of the Android module tree in this project's history
+## Continuous integration is the compile/test gate
 
-This entire Android app tree (`app/`, `core/*` except `engine/`,
-`feature/*`) was written in a sandbox with **no Android SDK installed and
-no network access to Google's Maven repository** (`dl.google.com`
-returns a proxy-level 403 there) — meaning the Android Gradle Plugin,
-Jetpack Compose, Room, Hilt, DataStore, WorkManager, and Play Services
-Nearby Connections could not be resolved, let alone compiled, in that
-environment. Only `engine/` (pure Kotlin, needs only Maven Central) was
-actually built and tested there. See `docs/ARCHITECTURE_AUDIT.md` for the
-full story and `docs/IMPLEMENTATION_STATUS.md` for what that means for
-confidence in this codebase — it is written to the same bar as the tested
-engine and has had careful manual review, but "compiles cleanly with
-Android Studio and a real SDK" is the first thing to verify in a normal
-development environment, not something this project can claim already
-happened.
+`engine/` (pure Kotlin, needs only Maven Central) builds and runs its
+test suite in any environment with a JDK. The full Android app tree
+(`app/`, `core/*`, `feature/*`) additionally needs the Android SDK and
+network access to Google's Maven repository for the Android Gradle
+Plugin, Jetpack Compose, Room, Hilt, DataStore, WorkManager, and Play
+Services Nearby Connections — `.github/workflows/android-build.yml`
+builds and tests both on every push and is the authoritative answer to
+"does this compile". See `docs/IMPLEMENTATION_STATUS.md` for current
+feature completeness.

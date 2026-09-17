@@ -22,8 +22,8 @@ data class ReceivedPacket(val fromPeer: DeviceId, val viaTransport: TransportKin
  * Transports that participate in automatic mesh-style flooding/relay.
  * SMS is deliberately excluded: it is never sent silently as part of a
  * broadcast sweep. It costs the user money, reveals a phone number, and
- * per the product brief must always be an explicit, user-confirmed action
- * ("Send by SMS"), surfaced only after mesh/internet delivery has failed.
+ * must always be an explicit, user-confirmed action ("Send by SMS"),
+ * surfaced only after mesh/internet delivery has failed.
  */
 private val MESH_BROADCAST_KINDS = setOf(TransportKind.LOCAL_MESH, TransportKind.NEARBY_DIRECT, TransportKind.INTERNET)
 

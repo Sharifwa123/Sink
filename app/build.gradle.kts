@@ -9,8 +9,8 @@ plugins {
 }
 
 // Release signing reads from a keystore.properties file that is never committed (see
-// .gitignore and docs/RELEASE.md) — its absence must not break debug builds or this
-// sandbox's build, so the release signing config is only wired up when it actually exists.
+// .gitignore and docs/RELEASE.md) — its absence must not break debug or CI builds,
+// so the release signing config is only wired up when it actually exists.
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {

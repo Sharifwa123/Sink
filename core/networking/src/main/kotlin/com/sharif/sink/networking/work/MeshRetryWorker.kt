@@ -20,8 +20,9 @@ private const val UNIQUE_WORK_NAME = "sink_mesh_retry_sweep"
  * process was killed and later restarted without a live peer-connect
  * event, this is what still eventually retries a queued message. 15
  * minutes is WorkManager's minimum periodic interval — Sink doesn't fight
- * that with a foreground service just to retry faster; that would be the
- * "unnecessary background activity" the brief explicitly warns against.
+ * that with a foreground service just to retry faster; that would be
+ * exactly the kind of unnecessary background battery drain this design
+ * avoids.
  */
 @HiltWorker
 class MeshRetryWorker @AssistedInject constructor(

@@ -25,8 +25,8 @@ data class DiscoveryUiState(
 /**
  * Shows only real, previously-verified-by-handshake peers (see
  * PeerIdentityPersister) — never a fabricated distance/signal number.
- * The brief is explicit that Sink must not invent proximity data it can't
- * actually measure, so this screen intentionally has no "meters away" UI.
+ * Sink must not invent proximity data it can't actually measure, so this
+ * screen intentionally has no "meters away" UI.
  */
 @HiltViewModel
 class DiscoveryViewModel @Inject constructor(

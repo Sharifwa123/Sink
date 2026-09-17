@@ -13,12 +13,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Placeholder for the optional internet path (product brief §20/§49: the
- * core mesh must not depend on a backend, and Sink must not pretend to
- * have remote connectivity it doesn't). This transport honestly reports
- * zero connected peers and fails every send rather than simulating a
- * connection — wiring it up requires a signaling/relay service that is
- * explicitly out of scope for this MVP. See docs/IMPLEMENTATION_STATUS.md.
+ * Placeholder for the optional internet path: the core mesh must not
+ * depend on a backend, and Sink must not pretend to have remote
+ * connectivity it doesn't. This transport honestly reports zero connected
+ * peers and fails every send rather than simulating a connection — wiring
+ * it up requires a signaling/relay service that is explicitly out of
+ * scope for this release. See docs/IMPLEMENTATION_STATUS.md.
  */
 class InternetTransport : CommunicationTransport {
     override val kind: TransportKind = TransportKind.INTERNET

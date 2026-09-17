@@ -16,8 +16,7 @@ import kotlin.test.assertTrue
 
 /**
  * Exercises the real [com.sharif.sink.mesh.RoutingEngine] across simulated
- * topologies. This is the "mesh simulation layer" the product brief asks
- * for: it proves routing, retry, TTL, duplicate detection, ACK
+ * topologies: proves routing, retry, TTL, duplicate detection, ACK
  * propagation, and store-and-forward behavior with real code, without
  * needing physical phones.
  *

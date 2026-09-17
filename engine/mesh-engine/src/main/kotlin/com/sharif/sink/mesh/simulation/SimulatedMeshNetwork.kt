@@ -10,9 +10,9 @@ import com.sharif.sink.protocol.SinkPacket
  * [com.sharif.sink.mesh.RoutingEngine] and [com.sharif.sink.mesh.TransportManager]
  * across a topology of any shape, including changing it mid-test (a node
  * "walking out of range" or "coming back"), without needing physical
- * devices. This is the mesh simulator called for by the product brief
- * ("test A→B→C→D, then C disappears") — the routing behavior it exercises
- * is the same code path used with real transports on device.
+ * devices. This is the mesh simulator that lets tests express scenarios
+ * like "A→B→C→D, then C disappears" directly — the routing behavior it
+ * exercises is the same code path used with real transports on device.
  */
 class SimulatedMeshNetwork {
     private val adjacency = mutableMapOf<DeviceId, MutableSet<DeviceId>>()

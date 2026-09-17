@@ -2,9 +2,7 @@
 
 ## CI: `.github/workflows/android-build.yml`
 
-This is the actual build/test gate for the project — see
-`docs/ANDROID_LIMITATIONS.md` for why the development sandbox itself
-couldn't compile the Android module tree. On every push and PR:
+This is the project's build/test gate. On every push and PR:
 
 1. **`engine-tests`** — runs the full 43-test `engine/` suite (no Android
    SDK needed).

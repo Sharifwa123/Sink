@@ -29,9 +29,9 @@ android {
 }
 
 dependencies {
-    implementation("com.sharif.sink:protocol")
-    implementation("com.sharif.sink:crypto-core")
-    implementation("com.sharif.sink:mesh-engine")
+    api("com.sharif.sink:protocol")
+    api("com.sharif.sink:crypto-core")
+    api("com.sharif.sink:mesh-engine")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.room.runtime)

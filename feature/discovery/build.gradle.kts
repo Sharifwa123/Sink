@@ -29,7 +29,7 @@ android {
 }
 
 dependencies {
-    implementation("com.sharif.sink:mesh-engine")
+    api("com.sharif.sink:mesh-engine")
     implementation(project(":core:database"))
     implementation(project(":core:networking"))
     implementation(project(":core:permissions"))

@@ -55,10 +55,14 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      # Provides the Android SDK (cmdline-tools, platform-tools) and accepts
-      # licenses; AGP downloads the specific platform/build-tools versions
-      # this project needs (compileSdk 34) on its own during the build.
-      - uses: android-actions/setup-android@v3
+      # No explicit Android SDK setup action: GitHub's ubuntu-latest runner
+      # image already ships a preinstalled, pre-licensed Android SDK
+      # (cmdline-tools, platform-tools, common platforms/build-tools) with
+      # ANDROID_HOME already set. android-actions/setup-android@v3 was tried
+      # here first and failed — it tries to install the long-removed legacy
+      # "tools" package against Google's current SDK repository — so it was
+      # dropped rather than worked around. AGP downloads compileSdk 34 /
+      # matching build-tools itself if they aren't already on the image.
 
       - uses: gradle/actions/setup-gradle@v4
 
@@ -83,8 +87,6 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-
-      - uses: android-actions/setup-android@v3
 
       - uses: gradle/actions/setup-gradle@v4
 

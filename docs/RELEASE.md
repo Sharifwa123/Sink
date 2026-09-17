@@ -1,5 +1,36 @@
 # Release
 
+## CI: `.github/workflows/android-build.yml`
+
+This is the actual build/test gate for the project — see
+`docs/ANDROID_LIMITATIONS.md` for why the development sandbox itself
+couldn't compile the Android module tree. On every push and PR:
+
+1. **`engine-tests`** — runs the full 43-test `engine/` suite (no Android
+   SDK needed).
+2. **`build-debug-apk`** — installs the Android SDK (`android-actions/setup-android`)
+   and runs `./gradlew :app:assembleDebug`, uploading the resulting APK
+   as a workflow artifact. This is the real, first compile check this
+   codebase gets.
+3. **`build-release-apk`** — only runs if the repository variable
+   `HAS_RELEASE_SIGNING` is set to `true` (Settings → Secrets and
+   variables → Actions → Variables), and reads the four secrets below to
+   reconstruct `keystore.properties` at build time. Never enable this
+   without also adding the secrets — the job reconstructs the keystore
+   from them into the runner's temp directory, never commits anything.
+
+To enable signed release builds in CI, add these **repository secrets**
+(Settings → Secrets and variables → Actions → Secrets):
+
+| Secret | Value |
+|---|---|
+| `RELEASE_KEYSTORE_BASE64` | `base64 -w0 sink-release.jks` output |
+| `RELEASE_KEYSTORE_PASSWORD` | the keystore password |
+| `RELEASE_KEY_ALIAS` | the key alias (e.g. `sink`) |
+| `RELEASE_KEY_PASSWORD` | the key password |
+
+...and set the repository **variable** `HAS_RELEASE_SIGNING` to `true`.
+
 ## Versioning
 
 `app/build.gradle.kts`: `applicationId = "com.sharif.sink"`,
@@ -71,13 +102,8 @@ a legal privacy policy page.
 
 ## Before every release, verify
 
-1. `cd engine && ./gradlew test` is green (43 tests as of this writing;
-   see `docs/TESTING.md`).
-2. `./gradlew :app:assembleDebug` succeeds in an environment with the
-   Android SDK and network access to Google's Maven repository (this
-   project's own development sandbox could not verify this — see
-   `docs/ANDROID_LIMITATIONS.md` — so this is the first real compile
-   check a release process must perform).
-3. Manual device testing (`docs/DEVICE_TESTING.md`) for anything touched
+1. The `android-build` GitHub Actions workflow is green on the commit
+   being released (both `engine-tests` and `build-debug-apk`).
+2. Manual device testing (`docs/DEVICE_TESTING.md`) for anything touched
    since the last release.
-4. `docs/IMPLEMENTATION_STATUS.md` reflects the current state honestly.
+3. `docs/IMPLEMENTATION_STATUS.md` reflects the current state honestly.

@@ -1,5 +1,7 @@
 # Sink
 
+[![Android build](https://github.com/Sharifwa123/Sink/actions/workflows/android-build.yml/badge.svg)](https://github.com/Sharifwa123/Sink/actions/workflows/android-build.yml)
+
 **By SHARIF TECHNOLOGIES**
 
 > Offline communication when connectivity is unavailable.
@@ -64,9 +66,12 @@ cd engine && ./gradlew test
 ./gradlew :app:assembleDebug
 ```
 
-See `docs/ANDROID_LIMITATIONS.md` and `docs/IMPLEMENTATION_STATUS.md` for
-exactly what has and hasn't been verified by an actual compile in this
-project's history.
+This sandbox has neither, so the Android module tree's actual compile
+verification happens in CI (`.github/workflows/android-build.yml`) —
+check that workflow's status on the current commit rather than assuming
+this repository has been fully compiled locally. See
+`docs/ANDROID_LIMITATIONS.md` and `docs/IMPLEMENTATION_STATUS.md` for the
+full, honest picture.
 
 ## Documentation
 

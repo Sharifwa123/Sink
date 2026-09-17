@@ -129,26 +129,37 @@ result from this project's own build history, not an aspirational claim.
 - **`engine/` (pure Kotlin/JVM)**: builds and tests successfully with
   Gradle 8.14.3 / Kotlin 2.0.21 / JDK 21, verified repeatedly during
   development.
-- **Root Android project (`app/`, `core/*`, `feature/*`)**: **has not been
-  compiled** in this project's history. The sandbox this was built in has
-  no Android SDK and cannot reach `dl.google.com` (Google's Maven
+- **Root Android project (`app/`, `core/*`, `feature/*`)**: **was not
+  compiled during development** — the sandbox this was written in has no
+  Android SDK and cannot reach `dl.google.com` (Google's Maven
   repository), so the Android Gradle Plugin, Compose, Room, Hilt,
   DataStore, WorkManager, and Play Services Nearby Connections could not
-  be resolved. Every file was written and manually reviewed to the same
-  engineering bar as the tested `engine/` code, cross-checked for
+  be resolved there. Every file was written and manually reviewed to the
+  same engineering bar as the tested `engine/` code, cross-checked for
   matching function signatures across module boundaries (navigation
-  callbacks, DI providers, DAO/entity fields), but "green build in
-  Android Studio with a real SDK" is the outstanding verification step —
-  see `docs/ANDROID_LIMITATIONS.md` and `docs/RELEASE.md`.
+  callbacks, DI providers, DAO/entity fields). The real compile check now
+  happens in CI — see below — rather than in this project's own
+  development sandbox.
+
+## CONTINUOUS INTEGRATION
+
+`.github/workflows/android-build.yml` runs on every push/PR: the full
+`engine/` test suite, then `./gradlew :app:assembleDebug` on a GitHub
+runner (which has both the Android SDK and Google Maven access this
+sandbox lacked). **Check that workflow's status on the current commit for
+the actual answer to "does the Android app compile"** — this document
+describes the code as written and reviewed, not a guaranteed-green CI
+run, since CI results change independently of this file. See
+`docs/RELEASE.md` for what the workflow does and how to enable signed
+release builds.
 
 ## NEXT RECOMMENDED STEPS
 
-1. Open the project in Android Studio (or any environment with network
-   access to Google's Maven) and run `./gradlew :app:assembleDebug` —
-   fix whatever surfaces; multi-module Kotlin/Compose/Hilt projects
-   typically have a handful of small wiring issues on a first real
-   compile (missing dependency declarations, import path typos) even when
-   carefully hand-written.
+1. Check the `android-build` GitHub Actions workflow's result on the
+   latest commit; fix whatever it surfaces. Multi-module Kotlin/Compose/
+   Hilt projects typically have a handful of small wiring issues on a
+   first real compile (missing dependency declarations, import path
+   typos) even when carefully hand-written.
 2. Run the app on two to three physical devices and work through
    `docs/DEVICE_TESTING.md`.
 3. Add a dedicated `POST_NOTIFICATIONS` runtime-permission priming step

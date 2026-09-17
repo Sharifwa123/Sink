@@ -29,6 +29,7 @@ android {
 }
 
 dependencies {
+    implementation("com.sharif.sink:protocol")
     implementation("com.sharif.sink:mesh-engine")
     implementation(project(":core:crypto"))
     implementation(project(":core:datastore"))

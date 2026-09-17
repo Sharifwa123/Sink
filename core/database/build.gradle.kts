@@ -30,6 +30,7 @@ android {
 
 dependencies {
     implementation("com.sharif.sink:protocol")
+    implementation("com.sharif.sink:crypto-core")
     implementation("com.sharif.sink:mesh-engine")
 
     implementation(libs.androidx.core.ktx)

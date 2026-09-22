@@ -61,9 +61,17 @@ class TransportManager(
 
     fun transportOfKind(kind: TransportKind): CommunicationTransport? = transports.find { it.kind == kind }
 
-    suspend fun start() {
+    /**
+     * Wires up every transport's listeners unconditionally (a transport a caller chooses not to
+     * [activate] still needs its `incomingPackets`/`connectedPeers` observed — e.g. SMS must keep
+     * receiving even while local-mesh radios are administratively turned off), then calls
+     * `start()` only on the transports in [activate].
+     */
+    suspend fun start(activate: Set<TransportKind> = transports.map { it.kind }.toSet()) {
         transports.forEach { transport ->
-            transport.start()
+            if (transport.kind in activate) {
+                transport.start()
+            }
             scope.launch {
                 transport.incomingPackets.collect { incoming ->
                     val received = ReceivedPacket(incoming.fromPeer, transport.kind, incoming.packet)
@@ -81,6 +89,16 @@ class TransportManager(
 
     suspend fun stop() {
         transports.forEach { it.stop() }
+    }
+
+    /**
+     * Retries just the local-mesh transport's own `start()` — safe to call any number of times
+     * after the initial [start], since listener wiring only happens once in [start] and doesn't
+     * depend on whether the transport's own radio setup previously succeeded. Used after the
+     * user grants a previously-missing permission or re-enables nearby discovery mid-session.
+     */
+    suspend fun retryLocalMesh() {
+        transports.find { it.kind == TransportKind.LOCAL_MESH }?.start()
     }
 
     fun registerPacketListener(listener: suspend (ReceivedPacket) -> Unit) {

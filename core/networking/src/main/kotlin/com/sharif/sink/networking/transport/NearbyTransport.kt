@@ -20,6 +20,8 @@ import com.sharif.sink.mesh.CommunicationTransport
 import com.sharif.sink.mesh.IncomingPacket
 import com.sharif.sink.mesh.TransportCapabilities
 import com.sharif.sink.mesh.TransportSendResult
+import com.sharif.sink.networking.mesh.MeshRadioActivity
+import com.sharif.sink.networking.mesh.MeshRadioStatusReporter
 import com.sharif.sink.protocol.DeviceId
 import com.sharif.sink.protocol.PacketCodec
 import com.sharif.sink.protocol.SinkPacket
@@ -54,6 +56,7 @@ class NearbyTransport(
     context: Context,
     private val localDeviceId: DeviceId,
     private val logger: SinkLogger,
+    private val radioStatus: MeshRadioStatusReporter,
 ) : CommunicationTransport {
 
     private val client: ConnectionsClient = Nearby.getConnectionsClient(context)
@@ -130,15 +133,21 @@ class NearbyTransport(
     }
 
     override suspend fun start() {
+        radioStatus.update(MeshRadioActivity.STARTING)
         try {
             val advertisingOptions = AdvertisingOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
             client.startAdvertising(localDeviceId.value, SERVICE_ID, connectionLifecycleCallback, advertisingOptions).await()
 
             val discoveryOptions = DiscoveryOptions.Builder().setStrategy(Strategy.P2P_CLUSTER).build()
             client.startDiscovery(SERVICE_ID, endpointDiscoveryCallback, discoveryOptions).await()
+
+            radioStatus.update(MeshRadioActivity.ACTIVE)
         } catch (e: Exception) {
-            // Missing runtime permission, radios off, or no Play Services — fail closed, not silently.
+            // Missing runtime permission, radios off, or no Play Services — this used to fail
+            // completely silently (logcat only); now it's reported so the UI can explain it and
+            // offer a retry instead of just sitting there looking broken.
             logger.w(TAG, "Nearby start failed: ${e.javaClass.simpleName}")
+            radioStatus.update(MeshRadioActivity.FAILED, e.message ?: e.javaClass.simpleName)
         }
     }
 
@@ -149,6 +158,7 @@ class NearbyTransport(
         endpointToDeviceId.clear()
         deviceIdToEndpoint.clear()
         _connectedPeers.value = emptySet()
+        radioStatus.update(MeshRadioActivity.IDLE)
     }
 
     override suspend fun send(peer: DeviceId, packet: SinkPacket): TransportSendResult {

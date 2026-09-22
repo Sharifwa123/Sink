@@ -29,10 +29,8 @@ android {
 }
 
 dependencies {
-    api("com.sharif.sink:mesh-engine")
     implementation(project(":core:database"))
     implementation(project(":core:networking"))
-    implementation(project(":core:permissions"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -42,6 +40,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

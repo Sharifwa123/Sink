@@ -5,8 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.sharif.sink.database.dao.ConversationDao
 import com.sharif.sink.database.entity.ConversationEntity
 import com.sharif.sink.datastore.SinkPreferences
-import com.sharif.sink.mesh.NetworkStatus
-import com.sharif.sink.mesh.TransportManager
+import com.sharif.sink.networking.mesh.MeshConnectivityMonitor
+import com.sharif.sink.networking.mesh.MeshConnectivityState
 import com.sharif.sink.networking.update.UpdateChecker
 import com.sharif.sink.networking.update.UpdateInfo
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class HomeUiState(
-    val networkStatus: NetworkStatus = NetworkStatus.OFFLINE,
+    val meshState: MeshConnectivityState = MeshConnectivityState.Starting,
     val conversations: List<ConversationEntity> = emptyList(),
     val updateInfo: UpdateInfo? = null,
 )
@@ -29,7 +29,7 @@ data class HomeUiState(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     conversationDao: ConversationDao,
-    transportManager: TransportManager,
+    private val meshConnectivityMonitor: MeshConnectivityMonitor,
     private val updateChecker: UpdateChecker,
     private val preferences: SinkPreferences,
 ) : ViewModel() {
@@ -37,11 +37,11 @@ class HomeViewModel @Inject constructor(
     private val _updateInfo = MutableStateFlow<UpdateInfo?>(null)
 
     val uiState: StateFlow<HomeUiState> = combine(
-        transportManager.networkStatus,
+        meshConnectivityMonitor.state,
         conversationDao.observeAll(),
         _updateInfo,
-    ) { status, conversations, updateInfo ->
-        HomeUiState(networkStatus = status, conversations = conversations, updateInfo = updateInfo)
+    ) { meshState, conversations, updateInfo ->
+        HomeUiState(meshState = meshState, conversations = conversations, updateInfo = updateInfo)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     init {
@@ -57,5 +57,15 @@ class HomeViewModel @Inject constructor(
 
     fun dismissUpdate() {
         _updateInfo.update { null }
+    }
+
+    /** "Nearby discovery is off" card action — flipping this retries the mesh automatically (see MeshConnectivityMonitor). */
+    fun enableNearbyDiscovery() {
+        viewModelScope.launch { preferences.setNearbyDiscoveryEnabled(true) }
+    }
+
+    /** "Unavailable" card action. */
+    fun retryMesh() {
+        meshConnectivityMonitor.retryNow()
     }
 }

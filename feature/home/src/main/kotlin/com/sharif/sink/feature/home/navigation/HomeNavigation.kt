@@ -12,6 +12,7 @@ fun NavGraphBuilder.homeScreen(
     onOpenSettings: () -> Unit,
     onOpenEducation: () -> Unit,
     onOpenMeshVisualization: () -> Unit,
+    onRequestNearbyPermission: () -> Unit,
 ) {
     composable(HOME_ROUTE) {
         HomeRoute(
@@ -20,6 +21,7 @@ fun NavGraphBuilder.homeScreen(
             onOpenSettings = onOpenSettings,
             onOpenEducation = onOpenEducation,
             onOpenMeshVisualization = onOpenMeshVisualization,
+            onRequestNearbyPermission = onRequestNearbyPermission,
         )
     }
 }

@@ -15,6 +15,7 @@ import com.sharif.sink.mesh.LocalIdentity
 import com.sharif.sink.mesh.MessageQueue
 import com.sharif.sink.mesh.RoutingEngine
 import com.sharif.sink.mesh.TransportManager
+import com.sharif.sink.networking.mesh.MeshRadioStatusReporter
 import com.sharif.sink.networking.transport.InternetTransport
 import com.sharif.sink.networking.transport.NearbyTransport
 import com.sharif.sink.networking.transport.SmsTransport
@@ -64,8 +65,9 @@ object NetworkingModule {
         logger: SinkLogger,
         contactDao: ContactDao,
         permissionChecker: PermissionChecker,
+        meshRadioStatusReporter: MeshRadioStatusReporter,
     ): List<@JvmSuppressWildcards CommunicationTransport> = listOf(
-        NearbyTransport(context, localIdentity.deviceId, logger),
+        NearbyTransport(context, localIdentity.deviceId, logger, meshRadioStatusReporter),
         SmsTransport(contactDao, permissionChecker, logger),
         InternetTransport(),
     )

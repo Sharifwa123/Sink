@@ -11,6 +11,7 @@ import androidx.core.app.NotificationCompat
 import com.sharif.sink.datastore.SinkPreferences
 import com.sharif.sink.mesh.NetworkStatus
 import com.sharif.sink.mesh.TransportManager
+import com.sharif.sink.protocol.TransportKind
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
@@ -71,15 +72,20 @@ class MeshForegroundService : Service() {
 
         peerIdentityPersister.start()
 
-        // Nearby discovery can be turned off in Settings — honor that rather than starting
-        // radios/advertising regardless. Read once at session start: TransportManager doesn't
-        // support a safe partial stop/restart mid-session, so toggling this setting takes
-        // effect the next time Sink is opened, not instantly — a disclosed limitation, not a
-        // silently-ignored control.
+        // Nearby discovery can be turned off in Settings — honor that by not activating the
+        // local-mesh radio, but every transport's listeners are always wired (via
+        // TransportManager.start's `activate` set) so turning nearby discovery off never also
+        // breaks unrelated transports like SMS. MeshConnectivityMonitor retries the local-mesh
+        // transport automatically the moment the setting is flipped back on, so this doesn't
+        // require reopening the app.
         serviceScope.launch {
-            if (preferences.settings.first().nearbyDiscoveryEnabled) {
-                transportManager.start()
+            val nearbyEnabled = preferences.settings.first().nearbyDiscoveryEnabled
+            val activate = if (nearbyEnabled) {
+                TransportKind.entries.toSet()
+            } else {
+                TransportKind.entries.toSet() - TransportKind.LOCAL_MESH
             }
+            transportManager.start(activate)
         }
 
         transportManager.networkStatus

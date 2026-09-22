@@ -15,14 +15,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BluetoothDisabled
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -31,16 +37,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.sharif.sink.database.entity.ConversationEntity
-import com.sharif.sink.mesh.NetworkStatus
+import com.sharif.sink.networking.mesh.MeshConnectivityState
 import com.sharif.sink.networking.update.UpdateInfo
 
 @Composable
@@ -50,6 +58,7 @@ fun HomeRoute(
     onOpenSettings: () -> Unit,
     onOpenEducation: () -> Unit,
     onOpenMeshVisualization: () -> Unit,
+    onRequestNearbyPermission: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -61,6 +70,9 @@ fun HomeRoute(
         onOpenEducation = onOpenEducation,
         onOpenMeshVisualization = onOpenMeshVisualization,
         onDismissUpdate = viewModel::dismissUpdate,
+        onRequestNearbyPermission = onRequestNearbyPermission,
+        onEnableNearbyDiscovery = viewModel::enableNearbyDiscovery,
+        onRetryMesh = viewModel::retryMesh,
     )
 }
 
@@ -74,6 +86,9 @@ private fun HomeScreen(
     onOpenEducation: () -> Unit,
     onOpenMeshVisualization: () -> Unit,
     onDismissUpdate: () -> Unit,
+    onRequestNearbyPermission: () -> Unit,
+    onEnableNearbyDiscovery: () -> Unit,
+    onRetryMesh: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -103,7 +118,12 @@ private fun HomeScreen(
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             uiState.updateInfo?.let { UpdateAvailableBanner(it, onDismiss = onDismissUpdate) }
 
-            NetworkStatusBanner(uiState.networkStatus)
+            MeshStatusCard(
+                state = uiState.meshState,
+                onRequestPermission = onRequestNearbyPermission,
+                onEnableDiscovery = onEnableNearbyDiscovery,
+                onRetry = onRetryMesh,
+            )
 
             if (uiState.conversations.isEmpty()) {
                 EmptyConversations(onNewMessage)
@@ -158,25 +178,91 @@ private fun UpdateAvailableBanner(updateInfo: UpdateInfo, onDismiss: () -> Unit)
     }
 }
 
+/**
+ * Home's headline answer to "is this thing working right now" — the app was reported as looking
+ * "completely blind" with no indication of scanning, waiting, or connecting; this card always
+ * shows an honest, specific, and where possible actionable state instead of a thin static line.
+ */
 @Composable
-private fun NetworkStatusBanner(status: NetworkStatus) {
-    val (label, color) = when (status) {
-        NetworkStatus.ONLINE -> "Online" to MaterialTheme.colorScheme.primary
-        NetworkStatus.LOCAL_MESH -> "Connected — local mesh" to MaterialTheme.colorScheme.tertiary
-        NetworkStatus.NEARBY -> "Connected — nearby device" to MaterialTheme.colorScheme.tertiary
-        NetworkStatus.SMS_FALLBACK -> "SMS fallback available" to MaterialTheme.colorScheme.secondary
-        NetworkStatus.OFFLINE -> "Offline — looking for nearby devices" to MaterialTheme.colorScheme.outline
+private fun MeshStatusCard(
+    state: MeshConnectivityState,
+    onRequestPermission: () -> Unit,
+    onEnableDiscovery: () -> Unit,
+    onRetry: () -> Unit,
+) {
+    val (containerColor, contentColor) = when (state) {
+        is MeshConnectivityState.Connected -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
+        is MeshConnectivityState.Unavailable -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+        MeshConnectivityState.PermissionRequired,
+        MeshConnectivityState.DiscoveryDisabled,
+        -> MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        MeshConnectivityState.Starting,
+        MeshConnectivityState.Scanning,
+        -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
-    Surface(color = color.copy(alpha = 0.12f), modifier = Modifier.fillMaxWidth()) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = containerColor, contentColor = contentColor),
+    ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(color = color, shape = androidx.compose.foundation.shape.CircleShape, modifier = Modifier.size(8.dp)) {}
+            MeshStatusIcon(state)
             Spacer(Modifier.padding(horizontal = 6.dp))
-            Text(label, style = MaterialTheme.typography.labelLarge, color = color)
+            Column(modifier = Modifier.weight(1f)) {
+                Text(state.title(), style = MaterialTheme.typography.titleSmall)
+                state.subtitle()?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            when (state) {
+                MeshConnectivityState.PermissionRequired ->
+                    TextButton(onClick = onRequestPermission) { Text("Enable") }
+                MeshConnectivityState.DiscoveryDisabled ->
+                    TextButton(onClick = onEnableDiscovery) { Text("Turn on") }
+                is MeshConnectivityState.Unavailable ->
+                    TextButton(onClick = onRetry) { Text("Retry") }
+                else -> Unit
+            }
         }
     }
+}
+
+@Composable
+private fun MeshStatusIcon(state: MeshConnectivityState) {
+    when (state) {
+        MeshConnectivityState.Starting, MeshConnectivityState.Scanning ->
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+        is MeshConnectivityState.Connected ->
+            Icon(Icons.Filled.CheckCircle, contentDescription = null)
+        MeshConnectivityState.PermissionRequired ->
+            Icon(Icons.Filled.BluetoothDisabled, contentDescription = null)
+        MeshConnectivityState.DiscoveryDisabled ->
+            Icon(Icons.Filled.VisibilityOff, contentDescription = null)
+        is MeshConnectivityState.Unavailable ->
+            Icon(Icons.Filled.ErrorOutline, contentDescription = null)
+    }
+}
+
+private fun MeshConnectivityState.title(): String = when (this) {
+    MeshConnectivityState.Starting -> "Starting nearby discovery…"
+    MeshConnectivityState.Scanning -> "Searching for nearby devices…"
+    is MeshConnectivityState.Connected ->
+        if (peerCount == 1) "Connected to 1 nearby device" else "Connected to $peerCount nearby devices"
+    MeshConnectivityState.PermissionRequired -> "Bluetooth & Wi-Fi permission needed"
+    MeshConnectivityState.DiscoveryDisabled -> "Nearby discovery is off"
+    is MeshConnectivityState.Unavailable -> "Nearby discovery unavailable"
+}
+
+private fun MeshConnectivityState.subtitle(): String? = when (this) {
+    MeshConnectivityState.Starting -> null
+    MeshConnectivityState.Scanning -> "Keep Sink open on nearby devices too — they'll appear here."
+    is MeshConnectivityState.Connected -> "Messages can relay through the mesh right now."
+    MeshConnectivityState.PermissionRequired -> "Sink can't find nearby devices without it."
+    MeshConnectivityState.DiscoveryDisabled -> "Turn it on to find and connect to nearby Sink devices."
+    is MeshConnectivityState.Unavailable -> reason
 }
 
 @Composable

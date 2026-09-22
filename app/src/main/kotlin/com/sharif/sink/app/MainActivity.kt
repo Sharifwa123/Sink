@@ -16,6 +16,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.sharif.sink.app.navigation.SinkNavHost
 import com.sharif.sink.app.ui.theme.SinkTheme
+import com.sharif.sink.networking.mesh.MeshConnectivityMonitor
 import com.sharif.sink.networking.mesh.MeshForegroundService
 import com.sharif.sink.permissions.PermissionChecker
 import com.sharif.sink.permissions.SinkPermission
@@ -29,6 +30,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var permissionChecker: PermissionChecker
 
+    @Inject
+    lateinit var meshConnectivityMonitor: MeshConnectivityMonitor
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -39,6 +43,9 @@ class MainActivity : ComponentActivity() {
 
             val nearbyPermissionLauncher = rememberPermissionLauncher { granted ->
                 nearbyPermissionGranted = granted
+                // Retries the local-mesh transport immediately if this just turned true, instead
+                // of leaving it stuck until the next unrelated recomposition notices.
+                meshConnectivityMonitor.refresh()
             }
 
             // A mesh session is only kept alive while Sink is actually visible to the user —
@@ -48,6 +55,7 @@ class MainActivity : ComponentActivity() {
                 val observer = LifecycleEventObserver { _, event ->
                     when (event) {
                         Lifecycle.Event.ON_START -> MeshForegroundService.start(this@MainActivity)
+                        Lifecycle.Event.ON_RESUME -> meshConnectivityMonitor.refresh()
                         Lifecycle.Event.ON_STOP -> MeshForegroundService.stop(this@MainActivity)
                         else -> Unit
                     }

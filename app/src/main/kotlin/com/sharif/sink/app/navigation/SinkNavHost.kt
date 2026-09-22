@@ -78,6 +78,7 @@ fun SinkNavHost(
             onOpenSettings = { navController.navigate(SETTINGS_ROUTE) },
             onOpenEducation = { navController.navigate(EDUCATION_ROUTE) },
             onOpenMeshVisualization = { navController.navigate(MESH_VISUALIZATION_ROUTE) },
+            onRequestNearbyPermission = onRequestNearbyPermission,
         )
 
         discoveryScreen(

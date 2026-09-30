@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun OnboardingRoute(
     nearbyPermissionGranted: Boolean,
     onRequestNearbyPermission: () -> Unit,
+    onRequestNotificationsPermission: () -> Unit,
     onOnboardingComplete: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
@@ -42,6 +43,7 @@ fun OnboardingRoute(
         onNext = { next -> viewModel.goTo(next) },
         onConfirmDisplayName = { viewModel.confirmDisplayNameAndCreateIdentity { viewModel.goTo(OnboardingStep.NEARBY_PERMISSION) } },
         onRequestNearbyPermission = onRequestNearbyPermission,
+        onRequestNotificationsPermission = onRequestNotificationsPermission,
         onFinish = { viewModel.completeOnboarding(onOnboardingComplete) },
     )
 }
@@ -54,6 +56,7 @@ private fun OnboardingScreen(
     onNext: (OnboardingStep) -> Unit,
     onConfirmDisplayName: () -> Unit,
     onRequestNearbyPermission: () -> Unit,
+    onRequestNotificationsPermission: () -> Unit,
     onFinish: () -> Unit,
 ) {
     Scaffold { padding ->
@@ -76,7 +79,14 @@ private fun OnboardingScreen(
                 OnboardingStep.NEARBY_PERMISSION -> NearbyPermissionStep(
                     granted = nearbyPermissionGranted,
                     onRequest = onRequestNearbyPermission,
-                    onNext = { onNext(OnboardingStep.SMS_FALLBACK_EXPLAINER) },
+                    onNext = { onNext(OnboardingStep.NOTIFICATIONS_PERMISSION) },
+                )
+                OnboardingStep.NOTIFICATIONS_PERMISSION -> NotificationsPermissionStep(
+                    onRequest = {
+                        onRequestNotificationsPermission()
+                        onNext(OnboardingStep.SMS_FALLBACK_EXPLAINER)
+                    },
+                    onSkip = { onNext(OnboardingStep.SMS_FALLBACK_EXPLAINER) },
                 )
                 OnboardingStep.SMS_FALLBACK_EXPLAINER -> SmsExplainerStep(onFinish = onFinish)
             }
@@ -159,6 +169,21 @@ private fun NearbyPermissionStep(granted: Boolean, onRequest: () -> Unit, onNext
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = onNext, modifier = Modifier.fillMaxWidth()) { Text("Not now") }
     }
+}
+
+@Composable
+private fun NotificationsPermissionStep(onRequest: () -> Unit, onSkip: () -> Unit) {
+    Text("Get notified about new messages", style = MaterialTheme.typography.headlineSmall)
+    Spacer(Modifier.height(16.dp))
+    Text(
+        "Sink can let you know when a message arrives or is delivered, even while the app " +
+            "is in the background.",
+        style = MaterialTheme.typography.bodyLarge,
+    )
+    Spacer(Modifier.height(32.dp))
+    Button(onClick = onRequest, modifier = Modifier.fillMaxWidth()) { Text("Allow notifications") }
+    Spacer(Modifier.height(8.dp))
+    TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth()) { Text("Not now") }
 }
 
 @Composable

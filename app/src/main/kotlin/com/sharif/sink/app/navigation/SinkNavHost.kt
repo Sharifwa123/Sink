@@ -3,6 +3,7 @@ package com.sharif.sink.app.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -42,6 +43,8 @@ import com.sharif.sink.feature.mesh.navigation.MESH_VISUALIZATION_ROUTE
 fun SinkNavHost(
     nearbyPermissionGranted: Boolean,
     onRequestNearbyPermission: () -> Unit,
+    onRequestNotificationsPermission: () -> Unit,
+    pendingChatPeerId: String? = null,
     appViewModel: AppViewModel = hiltViewModel(),
 ) {
     val onboardingCompleted by appViewModel.onboardingCompleted.collectAsState()
@@ -61,10 +64,20 @@ fun SinkNavHost(
         navController.navigate(chatRoute(conversationId, peerDeviceId))
     }
 
+    // Tapping a message notification launches/resumes MainActivity with the sender's device id;
+    // once the nav graph is up (onboarding already known to be complete, since only a delivered
+    // message could have triggered this), jump straight into that chat.
+    LaunchedEffect(pendingChatPeerId, completed) {
+        if (completed && pendingChatPeerId != null) {
+            openConversation(pendingChatPeerId)
+        }
+    }
+
     NavHost(navController = navController, startDestination = startDestination) {
         onboardingScreen(
             nearbyPermissionGranted = nearbyPermissionGranted,
             onRequestNearbyPermission = onRequestNearbyPermission,
+            onRequestNotificationsPermission = onRequestNotificationsPermission,
             onOnboardingComplete = {
                 navController.navigate(HOME_ROUTE) {
                     popUpTo(ONBOARDING_ROUTE) { inclusive = true }

@@ -21,6 +21,9 @@ interface ConversationDao {
     @Query("UPDATE conversations SET lastMessagePreview = :preview, lastMessageAtEpochMillis = :atEpochMillis WHERE conversationId = :conversationId")
     suspend fun updateLastMessage(conversationId: String, preview: String, atEpochMillis: Long)
 
+    @Query("UPDATE conversations SET peerDisplayName = :displayName WHERE conversationId = :conversationId")
+    suspend fun updateDisplayName(conversationId: String, displayName: String)
+
     @Query("UPDATE conversations SET unreadCount = unreadCount + 1 WHERE conversationId = :conversationId")
     suspend fun incrementUnread(conversationId: String)
 

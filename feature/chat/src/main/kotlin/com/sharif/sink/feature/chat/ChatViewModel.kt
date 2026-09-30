@@ -46,17 +46,20 @@ class ChatViewModel @Inject constructor(
     private val peerId: DeviceId = DeviceId(decodeRouteArgument(checkNotNull(savedStateHandle["peerDeviceId"])))
     private val _draft = MutableStateFlow("")
     private val _sendError = MutableStateFlow<String?>(null)
-    private val _peerDisplayName = MutableStateFlow("")
 
     val uiState: StateFlow<ChatUiState> = combine(
         messageDao.observeConversation(conversationId),
         _draft,
         _sendError,
-        _peerDisplayName,
+        // Observed, not a one-shot fetch: the peer id comes straight from the route (see
+        // ChatNavigation), and the contact row may not exist yet the instant this screen opens
+        // (right after connecting, before the HELLO handshake has finished persisting it) — a
+        // one-shot lookup would freeze on the raw device id forever once that happened.
+        contactDao.observe(peerId.value),
         preferences.settings,
-    ) { messages, draft, error, peerDisplayName, settings ->
+    ) { messages, draft, error, contact, settings ->
         ChatUiState(
-            peerDisplayName = peerDisplayName,
+            peerDisplayName = contact?.displayName?.takeIf { it.isNotBlank() } ?: peerId.value,
             draft = draft,
             messages = messages,
             sendError = error,
@@ -65,15 +68,7 @@ class ChatViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ChatUiState())
 
     init {
-        // The peer id comes straight from the route (see ChatNavigation), not from an existing
-        // ConversationEntity — that row may not exist yet for a conversation nobody has sent
-        // the first message in, and this must still work then.
-        _peerDisplayName.value = peerId.value
-        viewModelScope.launch {
-            val contact = contactDao.get(peerId.value)
-            if (contact != null) _peerDisplayName.value = contact.displayName
-            conversationDao.clearUnread(conversationId)
-        }
+        viewModelScope.launch { conversationDao.clearUnread(conversationId) }
     }
 
     fun onDraftChanged(text: String) {

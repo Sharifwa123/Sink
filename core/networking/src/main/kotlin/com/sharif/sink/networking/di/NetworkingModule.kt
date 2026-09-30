@@ -50,8 +50,9 @@ object NetworkingModule {
     fun provideMessageQueue(
         messageDao: MessageDao,
         conversationDao: ConversationDao,
+        contactDao: ContactDao,
         localIdentity: LocalIdentity,
-    ): MessageQueue = RoomMessageQueue(messageDao, conversationDao) { localIdentity.deviceId }
+    ): MessageQueue = RoomMessageQueue(messageDao, conversationDao, contactDao) { localIdentity.deviceId }
 
     @Provides
     @Singleton
@@ -86,6 +87,7 @@ object NetworkingModule {
         transportManager: TransportManager,
         identityDirectory: IdentityDirectory,
         messageQueue: MessageQueue,
+        identityManager: LocalIdentityManager,
         @ApplicationScope scope: CoroutineScope,
     ): RoutingEngine = RoutingEngine(
         localIdentity = localIdentity,
@@ -93,5 +95,9 @@ object NetworkingModule {
         identityDirectory = identityDirectory,
         messageQueue = messageQueue,
         scope = scope,
+        // Without this, RoutingEngine falls back to its own default lambda (a literal
+        // "Sink User"), so every device announced the same generic name over HELLO
+        // regardless of what the user actually set during onboarding/Settings.
+        localDisplayName = { identityManager.displayName() },
     )
 }

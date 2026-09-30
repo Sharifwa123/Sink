@@ -15,6 +15,9 @@ interface ContactDao {
     @Query("SELECT * FROM contacts WHERE deviceId = :deviceId")
     suspend fun get(deviceId: String): ContactEntity?
 
+    @Query("SELECT * FROM contacts WHERE deviceId = :deviceId")
+    fun observe(deviceId: String): Flow<ContactEntity?>
+
     @Query("SELECT * FROM contacts WHERE isBlocked = 0 ORDER BY displayName ASC")
     fun observeAll(): Flow<List<ContactEntity>>
 

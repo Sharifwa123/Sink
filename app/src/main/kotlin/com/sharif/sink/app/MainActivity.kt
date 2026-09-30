@@ -1,5 +1,6 @@
 package com.sharif.sink.app
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -16,6 +17,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.sharif.sink.app.navigation.SinkNavHost
 import com.sharif.sink.app.ui.theme.SinkTheme
+import com.sharif.sink.networking.mesh.EXTRA_PEER_DEVICE_ID
 import com.sharif.sink.networking.mesh.MeshConnectivityMonitor
 import com.sharif.sink.networking.mesh.MeshForegroundService
 import com.sharif.sink.permissions.PermissionChecker
@@ -33,8 +35,14 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var meshConnectivityMonitor: MeshConnectivityMonitor
 
+    // Set by a tapped message notification (see MeshForegroundService); plain mutableStateOf
+    // rather than `remember` because onNewIntent runs outside the composition and still needs
+    // to be able to push a new value into it.
+    private var pendingChatPeerId by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingChatPeerId = intent?.getStringExtra(EXTRA_PEER_DEVICE_ID)
 
         setContent {
             var nearbyPermissionGranted by remember {
@@ -47,6 +55,8 @@ class MainActivity : ComponentActivity() {
                 // of leaving it stuck until the next unrelated recomposition notices.
                 meshConnectivityMonitor.refresh()
             }
+
+            val notificationsPermissionLauncher = rememberPermissionLauncher {}
 
             // A mesh session is only kept alive while Sink is actually visible to the user —
             // never as an unconditional background daemon. See docs/ANDROID_LIMITATIONS.md.
@@ -70,9 +80,20 @@ class MainActivity : ComponentActivity() {
                     onRequestNearbyPermission = {
                         nearbyPermissionLauncher.launch(SinkPermission.NEARBY_DEVICES.manifestPermissions().toTypedArray())
                     },
+                    onRequestNotificationsPermission = {
+                        val permissions = SinkPermission.NOTIFICATIONS.manifestPermissions().toTypedArray()
+                        if (permissions.isNotEmpty()) notificationsPermissionLauncher.launch(permissions)
+                    },
+                    pendingChatPeerId = pendingChatPeerId,
                 )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingChatPeerId = intent.getStringExtra(EXTRA_PEER_DEVICE_ID)
     }
 
     @Composable

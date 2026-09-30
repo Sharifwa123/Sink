@@ -9,12 +9,14 @@ const val ONBOARDING_ROUTE = "onboarding"
 fun NavGraphBuilder.onboardingScreen(
     nearbyPermissionGranted: Boolean,
     onRequestNearbyPermission: () -> Unit,
+    onRequestNotificationsPermission: () -> Unit,
     onOnboardingComplete: () -> Unit,
 ) {
     composable(ONBOARDING_ROUTE) {
         OnboardingRoute(
             nearbyPermissionGranted = nearbyPermissionGranted,
             onRequestNearbyPermission = onRequestNearbyPermission,
+            onRequestNotificationsPermission = onRequestNotificationsPermission,
             onOnboardingComplete = onOnboardingComplete,
         )
     }

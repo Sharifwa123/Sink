@@ -61,6 +61,26 @@ partially done, and not implemented.
   its own (see `docs/SECURITY.md`). CI publishes permanent, public GitHub
   Releases (`latest-debug` rolling release, plus versioned signed
   releases once signing is configured) for this to point at.
+- Real-time mesh connectivity status (`MeshConnectivityMonitor`,
+  `core:networking`): Home and Discovery show an honest, specific state
+  — starting, actively scanning, connected to N devices, or exactly why
+  not (permission missing, discovery turned off, radio failed to start)
+  — each with a one-tap fix where one exists, instead of a single static
+  "offline" line that looked the same whether the mesh was working,
+  starting, or dead. Granting the permission or re-enabling discovery
+  mid-session retries the local-mesh transport automatically.
+- Display names now actually propagate: the local device's HELLO
+  broadcast used to always claim the literal name "Sink User" regardless
+  of what the user set (`RoutingEngine`'s display-name callback was never
+  wired up); new conversations used to store the peer's raw device id as
+  its "name" and never correct it; Chat's title used to freeze on that
+  raw id if the contact record didn't exist yet the instant the screen
+  opened. All three are fixed and the relevant lookups are now reactive
+  (`Flow`-based), not one-shot.
+- Incoming-message notifications with a dedicated `POST_NOTIFICATIONS`
+  runtime-permission onboarding step, tapping a notification opens the
+  right chat directly, and the previously-cosmetic "Notifications"
+  Settings toggle now actually gates them.
 
 ## PARTIALLY COMPLETED
 
@@ -71,10 +91,6 @@ partially done, and not implemented.
 - **Forward secrecy**: per-message ephemeral-sender ECDH gives partial
   forward secrecy, not a full ratcheting session protocol. See
   `docs/SECURITY.md`.
-- **Notifications**: `POST_NOTIFICATIONS` is declared and the mesh
-  foreground service notification works, but there is no dedicated
-  runtime-permission priming screen or per-message notification
-  (incoming-message push notification) implemented yet.
 - **Blocked-user enforcement**: enforced at the routing layer for
   incoming `DATA` packets (see `docs/THREAT_MODEL.md` §8); does not yet also suppress a blocked
   contact's `HELLO`/`ACK` traffic from being relayed onward by this
@@ -153,12 +169,10 @@ release builds.
 
 1. Run the app on two to three physical devices and work through
    `docs/DEVICE_TESTING.md`.
-2. Add a dedicated `POST_NOTIFICATIONS` runtime-permission priming step
-   and incoming-message push notifications.
-3. Decide on and implement a proper ratcheting session protocol (e.g., a
+2. Decide on and implement a proper ratcheting session protocol (e.g., a
    Signal-Protocol-style Double Ratchet) if stronger forward secrecy is a
    priority before wider release.
-4. Add Compose UI tests and Room migration tests.
-5. Revisit whether Curve25519 is now safely usable given Sink's actual
+3. Add Compose UI tests and Room migration tests.
+4. Revisit whether Curve25519 is now safely usable given Sink's actual
    minSdk before the first public release, per the note in
    `docs/SECURITY.md`.

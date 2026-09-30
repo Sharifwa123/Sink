@@ -3,14 +3,18 @@ package com.sharif.sink.networking.mesh
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.sharif.sink.database.dao.ContactDao
 import com.sharif.sink.datastore.SinkPreferences
 import com.sharif.sink.mesh.NetworkStatus
+import com.sharif.sink.mesh.RoutingEngine
 import com.sharif.sink.mesh.TransportManager
+import com.sharif.sink.protocol.Message
 import com.sharif.sink.protocol.TransportKind
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -22,10 +26,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-private const val CHANNEL_ID = "sink_mesh_status"
-private const val NOTIFICATION_ID = 1001
+private const val STATUS_CHANNEL_ID = "sink_mesh_status"
+private const val STATUS_NOTIFICATION_ID = 1001
+private const val MESSAGE_CHANNEL_ID = "sink_incoming_messages"
 const val ACTION_START_MESH = "com.sharif.sink.action.START_MESH"
 const val ACTION_STOP_MESH = "com.sharif.sink.action.STOP_MESH"
+
+/** Read by MainActivity to jump straight into a chat when a message notification is tapped. */
+const val EXTRA_PEER_DEVICE_ID = "com.sharif.sink.extra.PEER_DEVICE_ID"
 
 /**
  * Foreground service that keeps local mesh discovery/connections alive
@@ -43,7 +51,13 @@ class MeshForegroundService : Service() {
     lateinit var transportManager: TransportManager
 
     @Inject
+    lateinit var routingEngine: RoutingEngine
+
+    @Inject
     lateinit var peerIdentityPersister: PeerIdentityPersister
+
+    @Inject
+    lateinit var contactDao: ContactDao
 
     @Inject
     lateinit var preferences: SinkPreferences
@@ -68,7 +82,7 @@ class MeshForegroundService : Service() {
     }
 
     private fun startAsForeground() {
-        startForeground(NOTIFICATION_ID, buildNotification(NetworkStatus.OFFLINE))
+        startForeground(STATUS_NOTIFICATION_ID, buildStatusNotification(NetworkStatus.OFFLINE))
 
         peerIdentityPersister.start()
 
@@ -91,12 +105,56 @@ class MeshForegroundService : Service() {
         transportManager.networkStatus
             .onEach { status ->
                 val manager = getSystemService(NotificationManager::class.java)
-                manager?.notify(NOTIFICATION_ID, buildNotification(status))
+                manager?.notify(STATUS_NOTIFICATION_ID, buildStatusNotification(status))
             }
+            .launchIn(serviceScope)
+
+        routingEngine.incomingMessages
+            .onEach { message -> handleIncomingMessage(message) }
             .launchIn(serviceScope)
     }
 
-    private fun buildNotification(status: NetworkStatus): Notification {
+    private suspend fun handleIncomingMessage(message: Message) {
+        if (!preferences.settings.first().notificationsEnabled) return
+        val senderId = message.senderId.value
+        val senderName = contactDao.get(senderId)?.displayName?.takeIf { it.isNotBlank() } ?: senderId
+        notifyIncomingMessage(senderId, senderName)
+    }
+
+    private fun notifyIncomingMessage(senderId: String, senderName: String) {
+        // Tapping the notification launches the app with the sender's id attached rather than
+        // referencing MainActivity directly — core:networking can't depend on :app — MainActivity
+        // reads this same EXTRA_PEER_DEVICE_ID key and jumps straight into that chat.
+        val contentIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(EXTRA_PEER_DEVICE_ID, senderId)
+        } ?: return
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            senderId.hashCode(),
+            contentIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
+        val notification = NotificationCompat.Builder(this, MESSAGE_CHANNEL_ID)
+            .setContentTitle(senderName)
+            // Never the decrypted body here: a notification can surface on a locked screen, and
+            // Sink keeps plaintext off of everything except the chat screen itself — see
+            // docs/SECURITY.md on what SinkLogger and friends are and aren't allowed to surface.
+            .setContentText("Sent you a message")
+            .setSmallIcon(android.R.drawable.ic_dialog_email)
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        getSystemService(NotificationManager::class.java)?.notify(senderId.hashCode(), notification)
+    }
+
+    private fun buildStatusNotification(status: NetworkStatus): Notification {
         val text = when (status) {
             NetworkStatus.ONLINE -> "Connected to the internet"
             NetworkStatus.LOCAL_MESH -> "Connected through the local mesh"
@@ -104,7 +162,7 @@ class MeshForegroundService : Service() {
             NetworkStatus.SMS_FALLBACK -> "Using SMS fallback"
             NetworkStatus.OFFLINE -> "Looking for nearby Sink devices…"
         }
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, STATUS_CHANNEL_ID)
             .setContentTitle("Sink")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
@@ -114,14 +172,17 @@ class MeshForegroundService : Service() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "Mesh network status",
-            NotificationManager.IMPORTANCE_LOW,
-        ).apply {
-            description = "Shows whether Sink is connected to nearby devices or the internet"
-        }
-        getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.createNotificationChannel(
+            NotificationChannel(STATUS_CHANNEL_ID, "Mesh network status", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Shows whether Sink is connected to nearby devices or the internet"
+            },
+        )
+        manager?.createNotificationChannel(
+            NotificationChannel(MESSAGE_CHANNEL_ID, "New messages", NotificationManager.IMPORTANCE_HIGH).apply {
+                description = "Notifies you when a new message arrives"
+            },
+        )
     }
 
     override fun onDestroy() {

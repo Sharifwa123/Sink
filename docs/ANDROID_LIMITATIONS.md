@@ -48,18 +48,49 @@ does not attempt to pretend otherwise.
 Sink at least once since its last reboot/force-stop and hasn't swiped it
 out of Recents — not just one with the app currently in the foreground.
 
+## Which connection mediums the mesh actually uses between two Sink devices
+
+Between two phones that both have Sink installed, the local-mesh
+transport (`NearbyTransport`, on top of Google Play Services Nearby
+Connections, `P2P_CLUSTER` strategy) already uses **Bluetooth Classic,
+Bluetooth LE, Wi-Fi Direct ("hotspot"-style ad-hoc links), and ordinary
+Wi-Fi LAN when both devices are already on the same Wi-Fi network** —
+Nearby Connections picks whichever of those is available and fastest at
+the moment, automatically, without Sink choosing a specific one. This is
+one reason the app's copy says "Bluetooth and Wi-Fi" rather than listing
+each sub-mode separately: "Wi-Fi" here already covers hotspot-style
+direct links and same-network LAN links, not just internet access. None
+of this requires the internet or a server — see `docs/SECURITY.md` for
+what Sink does and doesn't send over the network.
+
+**WAN (the open internet) is the one medium that is genuinely not
+implemented**, and not just an oversight: `InternetTransport.send()`
+always returns `Failed` today (see `docs/IMPLEMENTATION_STATUS.md`).
+Two phones on different networks (e.g. different homes, different mobile
+carriers) can't just open a direct connection to each other — NAT means
+neither side has a reachable public address, so some third-party
+rendezvous/relay point is unavoidable for a cross-network connection.
+Adding one would mean the core mesh depends on a server Sink's
+operator runs, which conflicts with this project's "no cloud backend
+dependency" design — so it stays a deliberate stub rather than a feature
+quietly cut. This is the one case where "we could add a backend" is a
+real, available option — just not one taken yet without that tradeoff
+being made deliberately and explicitly.
+
 ## Sink cannot use another app's Bluetooth/Wi-Fi connection, or message someone without Sink installed over the mesh
 
 Sink cannot see, join, or relay through a Bluetooth/Wi-Fi/hotspot
 connection or file-transfer session that belongs to a different app (for
-example Xender or Shareit/Xshare). Android's app sandboxing gives apps no
-API to observe, attach to, or borrow another app's active
-radio session — this isn't a missing Sink feature, it's a boundary the
-platform enforces for every app, by design. The two devices involved
-would also both need to speak Sink's own wire protocol to exchange a
-Sink message at all — a raw Bluetooth or Wi-Fi link by itself carries no
-"this is a Sink message" meaning without Sink's own encoding and
-encryption on both ends.
+example Xender or Shareit/Xshare) — this is a different question from the
+section above, which is about the radios Sink's *own* transport already
+uses between two Sink devices. Android's app sandboxing gives apps no
+API to observe, attach to, or borrow another app's active radio session
+— this isn't a missing Sink feature, it's a boundary the platform
+enforces for every app, by design. The two devices involved would also
+both need to speak Sink's own wire protocol to exchange a Sink message
+at all — a raw Bluetooth or Wi-Fi link by itself carries no "this is a
+Sink message" meaning without Sink's own encoding and encryption on both
+ends.
 
 The real, working equivalent of "message someone even if they don't have
 Sink yet" is the **invite-by-phone-number** flow (Contacts → **+**): Sink

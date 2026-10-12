@@ -49,10 +49,12 @@ data class PermissionRationale(
 fun SinkPermission.rationale(): PermissionRationale = when (this) {
     SinkPermission.NEARBY_DEVICES -> PermissionRationale(
         title = "Bluetooth & Wi-Fi permission",
-        explanation = "Sink uses Bluetooth and Wi-Fi directly — never mobile data or the internet — " +
-            "to discover and connect to other Sink devices near you, so messages can reach people even " +
-            "without any internet or cellular connection. Android may show this as separate Bluetooth " +
-            "and Wi-Fi prompts, or as one combined prompt, depending on your device.",
+        explanation = "Sink uses Bluetooth and Wi-Fi directly — including Wi-Fi Direct/hotspot-style " +
+            "links and the Wi-Fi network you're already on, never mobile data or the internet — to " +
+            "discover and connect to other Sink devices near you, so messages can reach people even " +
+            "without any internet or cellular connection. Sink picks whichever of those is available; " +
+            "Android may show this as separate Bluetooth and Wi-Fi prompts, or as one combined prompt, " +
+            "depending on your device.",
     )
 
     SinkPermission.NOTIFICATIONS -> PermissionRationale(

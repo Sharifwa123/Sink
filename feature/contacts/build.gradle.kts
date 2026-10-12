@@ -31,8 +31,10 @@ android {
 dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:crypto"))
+    implementation(project(":core:networking"))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(platform(libs.androidx.compose.bom))

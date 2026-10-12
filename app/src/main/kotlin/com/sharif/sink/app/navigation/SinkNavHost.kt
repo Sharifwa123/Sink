@@ -1,5 +1,11 @@
 package com.sharif.sink.app.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideIntoContainer
+import androidx.compose.animation.slideOutOfContainer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -73,7 +79,24 @@ fun SinkNavHost(
         }
     }
 
-    NavHost(navController = navController, startDestination = startDestination) {
+    val fadeSpec = tween<Float>(durationMillis = 220)
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination,
+        enterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(260)) + fadeIn(fadeSpec)
+        },
+        exitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(260)) + fadeOut(fadeSpec)
+        },
+        popEnterTransition = {
+            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(260)) + fadeIn(fadeSpec)
+        },
+        popExitTransition = {
+            slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(260)) + fadeOut(fadeSpec)
+        },
+    ) {
         onboardingScreen(
             nearbyPermissionGranted = nearbyPermissionGranted,
             onRequestNearbyPermission = onRequestNearbyPermission,

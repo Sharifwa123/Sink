@@ -22,23 +22,54 @@ chipset, Android version, and current radio load. Sink doesn't hardcode
 an assumed limit; `TransportManager.reachablePeers()` simply reflects
 whatever the transport currently reports.
 
-## No continuous background mesh daemon
+## Background behavior: runs while open, stops when you remove it from Recents
 
-Sink does not scan for or maintain mesh connections indefinitely in the
-background. `MeshForegroundService` runs — with a visible, low-priority
-notification, as Android requires for a foreground service — only while
-the app is actually in the foreground (`MainActivity`'s lifecycle
-observer starts it on `ON_START`, stops it on `ON_STOP`). This is a
-deliberate choice, not an accepted-but-unwanted constraint: continuously
-scanning in the background would be exactly the kind of unnecessary
-battery drain Android's own Doze/App Standby is designed to fight
-anyway on most devices.
+`MeshForegroundService` starts when Sink is opened and keeps mesh
+discovery/connections alive — with a visible, low-priority ongoing
+notification, as Android requires for any foreground service — for as
+long as Sink stays in your device's Recents/app-switcher list, including
+while you're using another app or the screen is off. It stops when you
+explicitly swipe Sink away from Recents (`Service.onTaskRemoved`), or when
+you turn the "Nearby discovery" setting off. Merely backgrounding the app
+(pressing home, switching apps without removing Sink from Recents) does
+**not** stop it — that used to be the behavior (stopping on `Activity.
+ON_STOP`), which made the mesh look dead the instant you tapped away; it
+no longer does.
 
-**Consequence**: a message can only relay through a device whose Sink app
-is currently open (or, if the OS keeps the foreground service warm
-briefly, very recently backgrounded). This is disclosed in the
-onboarding/education screens' framing ("keep Sink open and nearby devices
-will appear") rather than implied to be always-on.
+This is still not an unconditional always-on daemon: it is a real Android
+foreground service, bound by the same OS rules as a music player or an
+ongoing call. It cannot survive the user force-stopping the app from
+Settings, a device reboot without reopening Sink, or Android's rare
+aggressive background kills on some OEM skins. There is no way for an app
+to run invisibly forever in the background on stock Android, and Sink
+does not attempt to pretend otherwise.
+
+**Consequence**: a message can relay through any device that has opened
+Sink at least once since its last reboot/force-stop and hasn't swiped it
+out of Recents — not just one with the app currently in the foreground.
+
+## Sink cannot use another app's Bluetooth/Wi-Fi connection, or message someone without Sink installed over the mesh
+
+Sink cannot see, join, or relay through a Bluetooth/Wi-Fi/hotspot
+connection or file-transfer session that belongs to a different app (for
+example Xender or Shareit/Xshare). Android's app sandboxing gives apps no
+API to observe, attach to, or borrow another app's active
+radio session — this isn't a missing Sink feature, it's a boundary the
+platform enforces for every app, by design. The two devices involved
+would also both need to speak Sink's own wire protocol to exchange a
+Sink message at all — a raw Bluetooth or Wi-Fi link by itself carries no
+"this is a Sink message" meaning without Sink's own encoding and
+encryption on both ends.
+
+The real, working equivalent of "message someone even if they don't have
+Sink yet" is the **invite-by-phone-number** flow (Contacts → **+**): Sink
+sends them a plain, ordinary SMS saying who's inviting them and where to
+get the app — the same shape as WhatsApp's "invite a friend" link — and
+once they install Sink and the two of you are in mesh/SMS range of each
+other, a real conversation starts. This is a one-way invitation, not a
+message exchange: Sink has no way to detect in advance whether an
+arbitrary phone number already has the app, and cannot deliver a Sink
+message to a phone that has never run it.
 
 ## Runtime permission model varies significantly by API level
 

@@ -81,6 +81,29 @@ partially done, and not implemented.
   runtime-permission onboarding step, tapping a notification opens the
   right chat directly, and the previously-cosmetic "Notifications"
   Settings toggle now actually gates them.
+- Background persistence: `MeshForegroundService` used to stop the
+  instant `MainActivity` left the foreground (tied to `Activity.ON_STOP`),
+  which made the mesh look dead whenever the user merely switched apps.
+  It now keeps running — mesh discovery, connections, and the
+  store-and-forward queue included — for as long as Sink stays in
+  Recents, and stops only via `Service.onTaskRemoved` when the user
+  actually swipes the app away, or when "Nearby discovery" is turned off.
+  See `docs/ANDROID_LIMITATIONS.md`.
+- Screen-to-screen navigation now animates (slide + fade,
+  `SinkNavHost`'s `NavHost` transitions) instead of cutting instantly
+  between screens.
+- Invite-by-phone-number: Contacts' **+** button lets the user add
+  someone who doesn't have Sink yet by name and phone number, sending
+  them a plain SMS invite with a download link (`SinkInviteSender`,
+  `core:networking`) — the real equivalent of a WhatsApp-style "let's
+  chat on Sink" invite. The invite is tracked as a `PendingInviteEntity`
+  and shown in Contacts with a "waiting for them to install Sink" state
+  and a resend action until a real HELLO handshake with that person turns
+  them into an ordinary verified contact. This does **not** mean Sink can
+  message an arbitrary phone number directly, or piggyback on another
+  app's (e.g. Xender/Shareit) Bluetooth/Wi-Fi connection to reach someone
+  without Sink — neither is possible on Android; see
+  `docs/ANDROID_LIMITATIONS.md` for why.
 
 ## PARTIALLY COMPLETED
 

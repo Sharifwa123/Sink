@@ -58,15 +58,17 @@ class MainActivity : ComponentActivity() {
 
             val notificationsPermissionLauncher = rememberPermissionLauncher {}
 
-            // A mesh session is only kept alive while Sink is actually visible to the user —
-            // never as an unconditional background daemon. See docs/ANDROID_LIMITATIONS.md.
+            // The mesh service is started once Sink is opened and then keeps running — including
+            // while the app is backgrounded — until the user removes Sink from Recents (handled
+            // by MeshForegroundService.onTaskRemoved, not here). Backgrounding the Activity must
+            // never stop it: that's the whole point of it being a foreground service rather than
+            // tied to Activity visibility. See docs/ANDROID_LIMITATIONS.md.
             val lifecycleOwner = LocalLifecycleOwner.current
             DisposableEffect(lifecycleOwner) {
                 val observer = LifecycleEventObserver { _, event ->
                     when (event) {
                         Lifecycle.Event.ON_START -> MeshForegroundService.start(this@MainActivity)
                         Lifecycle.Event.ON_RESUME -> meshConnectivityMonitor.refresh()
-                        Lifecycle.Event.ON_STOP -> MeshForegroundService.stop(this@MainActivity)
                         else -> Unit
                     }
                 }

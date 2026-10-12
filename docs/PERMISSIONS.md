@@ -8,7 +8,7 @@ for the exact API-level branching.
 |---|---|---|---|
 | `NEARBY_DEVICES` | `BLUETOOTH_SCAN`/`ADVERTISE`/`CONNECT`, `NEARBY_WIFI_DEVICES`, or `ACCESS_COARSE_LOCATION` pre-Android 12 | Discover and connect to nearby Sink devices for local mesh messaging **over Bluetooth and Wi-Fi directly** — the two radios the mesh actually uses, never mobile data | Onboarding's "Find nearby Sink users" step (skippable), and again from the Discovery screen if skipped or later revoked. Copy throughout the app names Bluetooth and Wi-Fi explicitly rather than a vague "nearby devices" label, and the Diagnostics screen shows each radio's grant status individually. |
 | `NOTIFICATIONS` | `POST_NOTIFICATIONS` (API 33+ only; granted at install pre-33) | Let the user know about incoming messages and mesh status while the app is backgrounded briefly | Onboarding's "Get notified about new messages" step, right after the nearby-permission step (skippable via "Not now") |
-| `SEND_SMS` | `SEND_SMS` | Send a message as a fallback when no mesh/internet route exists, only after the user explicitly chooses "Send by SMS" | At the moment the user taps "Send by SMS" on a specific message — never earlier |
+| `SEND_SMS` | `SEND_SMS` | Send a message as a fallback when no mesh/internet route exists ("Send by SMS"), or send a plain invite SMS to a phone number added from Contacts' **+** button | At the moment the user taps "Send by SMS" on a specific message, or "Send invite via SMS" when adding a contact by phone number — never earlier |
 
 ## Always-declared, non-runtime permissions
 
@@ -18,8 +18,9 @@ for the exact API-level branching.
 - `ACCESS_WIFI_STATE`, `CHANGE_WIFI_STATE` — required by Nearby
   Connections' Wi-Fi-based strategy internals.
 - `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_CONNECTED_DEVICE` — for
-  `MeshForegroundService`, which only runs while the app is visible (see
-  `docs/ANDROID_LIMITATIONS.md`).
+  `MeshForegroundService`, which runs for as long as Sink stays in
+  Recents (not just while the app is on-screen) and stops when the user
+  swipes it away (see `docs/ANDROID_LIMITATIONS.md`).
 
 ## Graceful denial handling
 

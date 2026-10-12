@@ -36,13 +36,15 @@ const val ACTION_STOP_MESH = "com.sharif.sink.action.STOP_MESH"
 const val EXTRA_PEER_DEVICE_ID = "com.sharif.sink.extra.PEER_DEVICE_ID"
 
 /**
- * Foreground service that keeps local mesh discovery/connections alive
- * while the user is actively viewing a mesh-related screen (discovery,
- * chat, home) or has a message in flight. Never started unconditionally
- * at boot or kept alive indefinitely in the background — see
- * docs/ANDROID_LIMITATIONS.md §"background behavior" for why continuous
- * background scanning isn't something this app can promise on stock
- * Android.
+ * Foreground service that keeps local mesh discovery/connections alive for as
+ * long as Sink is in the task list — including while the app is backgrounded
+ * or the screen is off — and stops only when the user removes Sink from
+ * Recents ([onTaskRemoved]) or turns the "Nearby discovery" setting off. This
+ * is a real Android foreground service, not a best-effort background job: it
+ * runs with an ongoing notification exactly like a music player or a call,
+ * for as long as the OS allows foreground services to run (effectively
+ * indefinitely). It is not, and cannot be, a daemon that survives the user
+ * explicitly killing the app — see docs/ANDROID_LIMITATIONS.md.
  */
 @AndroidEntryPoint
 class MeshForegroundService : Service() {
@@ -189,6 +191,15 @@ class MeshForegroundService : Service() {
         serviceScope.launch { transportManager.stop() }
         serviceJob.cancel()
         super.onDestroy()
+    }
+
+    // Fires when the user swipes Sink away from Recents (not on a mere back/home press, which
+    // only backgrounds the app — the service and this notification keep running through that).
+    // This is the actual "user is done with the app" signal on Android; stopping here, rather
+    // than on Activity.onStop, is what lets the mesh keep relaying while the app is backgrounded.
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
